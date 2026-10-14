@@ -182,6 +182,6 @@ COMMIT="$(git -C "$PROJECT_ROOT" rev-parse HEAD)"
   printf 'Artifact: %s\n' "$(basename "$FINAL_DMG")"
 } > "$RECEIPT_FILE"
 
-shasum -a 256 -c "$CHECKSUM_FILE"
+(cd "$OUTPUT_DIR" && shasum -a 256 -c "$(basename "$CHECKSUM_FILE")")
 SUCCEEDED=1
 printf '\nPrivate test release completed:\n  %s\n  %s\n  %s\n' "$FINAL_DMG" "$CHECKSUM_FILE" "$RECEIPT_FILE"
