@@ -1,0 +1,23 @@
+.DS_Store
+
+# Generated MiniMax H3 state and large local assets
+minimax-h3-paths.env
+Models/
+Outputs/
+Profiles/
+*.safetensors
+*.mp4
+*.wav
+
+# Swift and Xcode build state
+.build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
