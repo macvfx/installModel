@@ -11,6 +11,7 @@ Profiles/
 
 # Swift and Xcode build state
 .build/
+/build/
 DerivedData/
 xcuserdata/
 *.xcuserstate

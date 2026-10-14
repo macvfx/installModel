@@ -27,7 +27,14 @@ swift test
 swift run InstallModel
 ```
 
-You can also open `Package.swift` in Xcode and run the `InstallModel` scheme. The package requires macOS 14 or later. When the audited root installer changes, update the bundled copy at `Sources/InstallModelApp/Resources/Scripts/install-minimax-h3-mac.sh` in the same commit and verify that both copies are identical.
+To create a normal Finder-launchable application bundle with the included model-download icon:
+
+```bash
+./scripts/build-app.sh debug
+open "build/Debug/InstallModel.app"
+```
+
+The bundle is ad-hoc signed for local inspection. It is not Developer ID signed, notarized, or packaged for distribution. You can also open `Package.swift` in Xcode and run the `InstallModel` scheme. The package requires macOS 14 or later. When the audited root installer changes, update the bundled copy at `Sources/InstallModelApp/Resources/Scripts/install-minimax-h3-mac.sh` in the same commit and verify that both copies are identical.
 
 ## Profiles
 
