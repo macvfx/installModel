@@ -12,38 +12,54 @@ struct ContentView: View {
     @State private var useSeparateModelsDirectory = true
     @State private var modelsDirectory = "/Volumes/Example-H3-Models/Models"
     @State private var licenseAccepted = false
+    @AppStorage("installModel.theme") private var storedTheme = AppTheme.system.rawValue
+
+    private var theme: AppTheme { AppTheme(rawValue: storedTheme) ?? .system }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
-                machineSection
-                accountSection
-                workflowSection
-                storageSection
-                actionsSection
-                outputSection
+        ZStack {
+            background
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    header
+                    machineSection
+                    accountSection
+                    workflowSection
+                    storageSection
+                    actionsSection
+                    outputSection
+                }
+                .padding(24)
             }
-            .padding(24)
         }
+        .foregroundStyle(theme.primaryText)
+        .tint(theme.accent)
+        .preferredColorScheme(theme.forcedColorScheme)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("MiniMax H3 Setup")
-                .font(.largeTitle.bold())
-            Text("A minimal front end for the repository's audited installer. Tokens are never requested or stored by this app.")
-                .foregroundStyle(.secondary)
+        HStack(alignment: .top, spacing: 24) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("MiniMax H3 Setup")
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(theme.heading)
+                Text("A minimal front end for the repository's audited installer. Tokens are never requested or stored by this app.")
+                    .foregroundStyle(theme.secondaryText)
+            }
+            Spacer(minLength: 20)
+            themeControl
         }
     }
 
     private var machineSection: some View {
-        GroupBox("1. Detected Mac") {
+        ThemedSection(title: "1. Detected Mac", theme: theme) {
             Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 8) {
-                GridRow { Text("Chip").foregroundStyle(.secondary); Text(machine.chip) }
-                GridRow { Text("Unified memory").foregroundStyle(.secondary); Text("\(machine.memoryGB) GB") }
-                GridRow { Text("Architecture").foregroundStyle(.secondary); Text(machine.architecture) }
-                GridRow { Text("Suggested profile").foregroundStyle(.secondary); Text(machine.recommendedProfile?.title ?? "Unsupported: at least 24 GB-class memory required") }
+                GridRow { Text("Chip").foregroundStyle(theme.secondaryText); Text(machine.chip) }
+                GridRow { Text("Unified memory").foregroundStyle(theme.secondaryText); Text("\(machine.memoryGB) GB") }
+                GridRow { Text("Architecture").foregroundStyle(theme.secondaryText); Text(machine.architecture) }
+                GridRow { Text("Suggested profile").foregroundStyle(theme.secondaryText); Text(machine.recommendedProfile?.title ?? "Unsupported: at least 24 GB-class memory required") }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -55,7 +71,7 @@ struct ContentView: View {
     }
 
     private var accountSection: some View {
-        GroupBox("2. Hugging Face account and license") {
+        ThemedSection(title: "2. Hugging Face account and license", theme: theme) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Create or sign in to a Hugging Face account, review the MiniMax H3 Community License on the model page, then authenticate this Mac with `hf auth login` in Terminal. Authentication is required on each Mac; the external model drive does not carry your account login.")
                 HStack {
@@ -70,20 +86,20 @@ struct ContentView: View {
     }
 
     private var workflowSection: some View {
-        GroupBox("3. Choose workflow") {
+        ThemedSection(title: "3. Choose workflow", theme: theme) {
             VStack(alignment: .leading, spacing: 10) {
                 Picker("Workflow", selection: $workflow) {
                     ForEach(WorkflowMode.allCases) { mode in Text(mode.rawValue).tag(mode) }
                 }
                 .pickerStyle(.segmented)
-                Text(workflow.guidance).foregroundStyle(.secondary)
+                Text(workflow.guidance).foregroundStyle(theme.secondaryText)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     private var storageSection: some View {
-        GroupBox("4. Storage and profile") {
+        ThemedSection(title: "4. Storage and profile", theme: theme) {
             VStack(alignment: .leading, spacing: 12) {
                 pathRow("Local installation root", text: $storageRoot) {
                     chooseDirectory(title: "Choose local installation root", value: $storageRoot)
@@ -101,7 +117,7 @@ struct ContentView: View {
 
                 if let limit = profile.memoryLimit(forMemoryGB: machine.memoryGB) {
                     Text("Estimated MLX memory guideline for this selection: \(limit) GB.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.secondaryText)
                 }
                 if !profile.isCompatible(withMemoryGB: machine.memoryGB) {
                     Label("This profile requires at least \(profile.minimumMemoryGB) GB unified memory.", systemImage: "exclamationmark.triangle.fill")
@@ -113,10 +129,10 @@ struct ContentView: View {
     }
 
     private var actionsSection: some View {
-        GroupBox("5. Preview, check, and install") {
+        ThemedSection(title: "5. Preview, check, and install", theme: theme) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Preview is read-only. Check reports missing components. Install / Repair may install Homebrew formulas, download large model files, create a Python environment, and build the profile-specific conditioner.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(theme.secondaryText)
                 HStack {
                     Button("Preview configuration") { run(.preview) }
                     Button("Check this Mac") { run(.check) }
@@ -130,7 +146,7 @@ struct ContentView: View {
                 if !licenseAccepted {
                     Text("License confirmation is required before model installation.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.secondaryText)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -138,7 +154,7 @@ struct ContentView: View {
     }
 
     private var outputSection: some View {
-        GroupBox("Installer output") {
+        ThemedSection(title: "Installer output", theme: theme) {
             ScrollView([.horizontal, .vertical]) {
                 Text(installer.output)
                     .font(.system(.caption, design: .monospaced))
@@ -147,6 +163,52 @@ struct ContentView: View {
             }
             .frame(minHeight: 220)
         }
+    }
+
+    @ViewBuilder
+    private var background: some View {
+        if theme == .iconContrast {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.015, green: 0.045, blue: 0.12),
+                    Color(red: 0.025, green: 0.095, blue: 0.21),
+                    Color(red: 0.01, green: 0.03, blue: 0.085)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            Color(nsColor: .windowBackgroundColor)
+        }
+    }
+
+    private var themeControl: some View {
+        VStack(alignment: .trailing, spacing: 5) {
+            Text("Appearance")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(theme.secondaryText)
+            HStack(spacing: 8) {
+                Text("System")
+                    .font(.caption)
+                Slider(value: themeSliderValue, in: 0...1, step: 1)
+                    .frame(width: 92)
+                    .accessibilityLabel("App appearance")
+                    .accessibilityValue(theme.title)
+                Text("Icon Contrast")
+                    .font(.caption)
+                    .foregroundStyle(theme == .iconContrast ? theme.heading : theme.secondaryText)
+            }
+        }
+        .padding(10)
+        .background(theme == .iconContrast ? Color.white.opacity(0.06) : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private var themeSliderValue: Binding<Double> {
+        Binding(
+            get: { theme == .iconContrast ? 1 : 0 },
+            set: { storedTheme = $0 >= 0.5 ? AppTheme.iconContrast.rawValue : AppTheme.system.rawValue }
+        )
     }
 
     private var configurationIsValid: Bool {
@@ -187,7 +249,7 @@ struct ContentView: View {
     @ViewBuilder
     private func pathRow(_ label: String, text: Binding<String>, choose: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(label).font(.caption).foregroundStyle(theme.secondaryText)
             HStack {
                 TextField(label, text: text)
                     .textFieldStyle(.roundedBorder)

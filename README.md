@@ -15,6 +15,7 @@ The repository also contains an early, deliberately small macOS SwiftUI front en
 - guides the operator through Hugging Face account creation and license review;
 - supports a local installation root plus a separate external `Models` folder;
 - explains the Stage 1 preparation-Mac and Stage 2 target-Mac workflow;
+- provides a persistent appearance slider between the native System theme and a higher-contrast navy, cyan, and amber theme derived from the app icon;
 - runs Preview, Check, and Install / Repair through a bundled copy of the reviewed installer; and
 - shows the exact command and live combined output without asking for or storing a token.
 
