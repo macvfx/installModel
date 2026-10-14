@@ -8,7 +8,7 @@ enum AppTheme: String {
     var title: String {
         switch self {
         case .system: "System"
-        case .iconContrast: "Icon Contrast"
+        case .iconContrast: "Magic theme"
         }
     }
 

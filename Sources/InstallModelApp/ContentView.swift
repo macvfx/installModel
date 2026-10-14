@@ -183,32 +183,31 @@ struct ContentView: View {
     }
 
     private var themeControl: some View {
-        VStack(alignment: .trailing, spacing: 5) {
-            Text("Appearance")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(theme.secondaryText)
-            HStack(spacing: 8) {
-                Text("System")
-                    .font(.caption)
-                Slider(value: themeSliderValue, in: 0...1, step: 1)
-                    .frame(width: 92)
-                    .accessibilityLabel("App appearance")
-                    .accessibilityValue(theme.title)
-                Text("Icon Contrast")
-                    .font(.caption)
-                    .foregroundStyle(theme == .iconContrast ? theme.heading : theme.secondaryText)
+        Button {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                storedTheme = theme == .iconContrast ? AppTheme.system.rawValue : AppTheme.iconContrast.rawValue
             }
+        } label: {
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(theme == .iconContrast ? theme.accent : theme.secondaryText)
+                .frame(width: 34, height: 34)
+                .background(
+                    theme == .iconContrast
+                        ? Color(red: 0.05, green: 0.16, blue: 0.32)
+                        : Color(nsColor: .controlBackgroundColor),
+                    in: Circle()
+                )
+                .overlay {
+                    Circle()
+                        .stroke(theme == .iconContrast ? theme.heading.opacity(0.65) : Color.secondary.opacity(0.25))
+                }
         }
-        .padding(10)
-        .background(theme == .iconContrast ? Color.white.opacity(0.06) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-    }
-
-    private var themeSliderValue: Binding<Double> {
-        Binding(
-            get: { theme == .iconContrast ? 1 : 0 },
-            set: { storedTheme = $0 >= 0.5 ? AppTheme.iconContrast.rawValue : AppTheme.system.rawValue }
-        )
+        .buttonStyle(.plain)
+        .help(theme == .iconContrast ? "Return to System theme" : "Reveal Magic theme")
+        .accessibilityLabel("Appearance")
+        .accessibilityHint(theme == .iconContrast ? "Return to System theme" : "Reveal Magic theme")
+        .accessibilityValue(theme.title)
     }
 
     private var configurationIsValid: Bool {
