@@ -43,6 +43,15 @@ open "build/Debug/InstallModel.app"
 
 The bundle is ad-hoc signed for local inspection. It is not Developer ID signed, notarized, or packaged for distribution. You can also open `Package.swift` in Xcode and run the `InstallModel` scheme. The package requires macOS 14 or later. When the audited root installer changes, update the bundled copy at `Sources/InstallModelApp/Resources/Scripts/install-minimax-h3-mac.sh` in the same commit and verify that both copies are identical.
 
+For a private test build that can be copied to other Apple Silicon Macs, use the Keychain-backed release script. It requires an installed Developer ID Application identity and a `notarytool` profile; it never accepts credentials as arguments:
+
+```bash
+./scripts/build-sign-notarize-test-release.sh \
+  --output-dir "/Volumes/Example-Releases/InstallModel-0.1.0-1"
+```
+
+The script builds the Release app, applies the hardened runtime and secure timestamp, notarizes and staples the app and DMG, mounts the DMG, verifies its exact app with `codesign`, `stapler`, and Gatekeeper, and writes a SHA-256 file plus a release receipt. This produces a private test artifact only. GitHub publication remains a separate, explicitly approved operation.
+
 ## Profiles
 
 | Auto-selected class | Conditioner | MLX memory guideline | Safe stream group | Initial test |
