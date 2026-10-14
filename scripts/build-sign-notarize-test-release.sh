@@ -122,6 +122,10 @@ ditto "$SIGNED_APP" "$STAGE_DIR/$APP_NAME.app"
 ln -s /Applications "$STAGE_DIR/Applications"
 hdiutil create -volname "$APP_NAME $VERSION Test" -srcfolder "$STAGE_DIR" -format UDZO -ov "$UNSIGNED_DMG"
 
+log "Applying Developer ID signature to DMG"
+codesign --force --timestamp --sign "$SIGNING_IDENTITY" "$UNSIGNED_DMG"
+codesign --verify --verbose=2 "$UNSIGNED_DMG"
+
 log "Submitting DMG to Apple notarization"
 DMG_NOTARY_OUTPUT="$WORK_DIR/notarytool-dmg.txt"
 xcrun notarytool submit "$UNSIGNED_DMG" --keychain-profile "$NOTARY_PROFILE" --wait | tee "$DMG_NOTARY_OUTPUT"
@@ -131,6 +135,7 @@ DMG_SUBMISSION_ID="$(awk '/^[[:space:]]*id:/ { print $2; exit }' "$DMG_NOTARY_OU
 log "Stapling and validating DMG ticket"
 xcrun stapler staple "$UNSIGNED_DMG"
 xcrun stapler validate "$UNSIGNED_DMG"
+codesign --verify --verbose=2 "$UNSIGNED_DMG"
 spctl -a -vv -t open --context context:primary-signature "$UNSIGNED_DMG"
 
 log "Mounting DMG for exact-artifact validation"
