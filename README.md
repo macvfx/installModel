@@ -6,6 +6,12 @@ The primary script is `install-minimax-h3-mac.sh`. The older `install-minimax-h3
 
 The checked-in examples use fictional volume names and user paths. Generated environment files, model weights, outputs, caches, and machine-specific Xcode data are intentionally excluded from version control. Do not commit Hugging Face tokens or a generated `minimax-h3-paths.env` file.
 
+## Documentation
+
+- [Two-Mac Testing User Guide](docs/TESTING_USER_GUIDE.md) — preparation-Mac download, external-drive handoff, target-Mac setup, generation validation, and evidence checklist.
+- [Development Backlog](docs/BACKLOG.md) — prioritized safety, readiness, generation, distribution, and performance work with acceptance gates.
+- [Detailed Mac Setup Guide](docs/MINIMAX_H3_MAC_SETUP_GUIDE.md) — manual MLX setup concepts, commands, profile details, troubleshooting, and references.
+
 ## Minimal SwiftUI app
 
 The repository also contains an early, deliberately small macOS SwiftUI front end. It:
