@@ -6,6 +6,29 @@ The primary script is `install-minimax-h3-mac.sh`. The older `install-minimax-h3
 
 The checked-in examples use fictional volume names and user paths. Generated environment files, model weights, outputs, caches, and machine-specific Xcode data are intentionally excluded from version control. Do not commit Hugging Face tokens or a generated `minimax-h3-paths.env` file.
 
+## Minimal SwiftUI app
+
+The repository also contains an early, deliberately small macOS SwiftUI front end. It:
+
+- detects Apple Silicon, chip name, and unified memory;
+- recommends the same 24 GB, 64 GB, or 128 GB profile as the script;
+- guides the operator through Hugging Face account creation and license review;
+- supports a local installation root plus a separate external `Models` folder;
+- explains the Stage 1 preparation-Mac and Stage 2 target-Mac workflow;
+- runs Preview, Check, and Install / Repair through a bundled copy of the reviewed installer; and
+- shows the exact command and live combined output without asking for or storing a token.
+
+This is a development prototype, not a signed or sandboxed release. It intentionally leaves browser account creation, license acceptance, Homebrew installation, and `hf auth login` under the operator's control. Model generation remains in the documented runtime commands after installation.
+
+Build, test, and run it with Xcode's active command-line toolchain:
+
+```bash
+swift test
+swift run InstallModel
+```
+
+You can also open `Package.swift` in Xcode and run the `InstallModel` scheme. The package requires macOS 14 or later. When the audited root installer changes, update the bundled copy at `Sources/InstallModelApp/Resources/Scripts/install-minimax-h3-mac.sh` in the same commit and verify that both copies are identical.
+
 ## Profiles
 
 | Auto-selected class | Conditioner | MLX memory guideline | Safe stream group | Initial test |
