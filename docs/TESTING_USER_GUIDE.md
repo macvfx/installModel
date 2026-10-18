@@ -1,6 +1,6 @@
 # InstallModel Two-Mac Testing Guide
 
-**Status:** Operator test guide for the current development prototype
+**Status:** Operator and release test guide for InstallModel 0.2.0 (build 2)
 
 **Audience:** Testers preparing MiniMax H3 model assets on one Apple Silicon Mac and completing setup on a second Apple Silicon Mac
 
@@ -15,14 +15,15 @@ Current behavior:
 - installs or checks the local runtime and required command-line components;
 - stores model assets in a separately selected external `Models` folder;
 - reuses completed model files when the drive moves to another Mac; and
-- runs the runtime doctor after installation.
+- runs the runtime doctor after installation;
+- loads the generated environment safely and runs a configurable test clip from the Generate tab; and
+- provides About and in-app Help windows with public documentation links.
 
 Current limitations:
 
-- the app is an ad-hoc-signed development build, not a notarized release;
 - Hugging Face account creation, license review, and `hf auth login` remain manual;
-- the app does not yet prevent sleep, keep a separate log file, or safely terminate every child process;
-- clip generation is performed with the documented Terminal command after setup; and
+- the app does not yet keep a separate durable log file or safely terminate every child process;
+- media stream validation and audiovisual acceptance remain manual after generation; and
 - M2 Ultra 128 GB performance has not yet been measured.
 
 Do not use this test to overwrite an existing runtime with uncommitted changes. Do not place a Hugging Face token in the app, a command argument, a screenshot, or a test report.
@@ -74,7 +75,17 @@ Use a fictional label such as `Example-H3-Models` when documenting a test. The e
 
 Keep the same external-volume name on both Macs. The model files are portable, but the generated environment file and Python environment contain absolute paths.
 
-### Record the software under test
+### Obtain and record the software under test
+
+For the public release, download the DMG and checksum from the [GitHub Releases page](https://github.com/macvfx/installModel/releases). Verify the checksum before opening it:
+
+```bash
+shasum -a 256 -c InstallModel-0.2.0-build2.sha256.txt
+```
+
+Drag `InstallModel.app` to Applications. The release must pass Gatekeeper without bypass instructions. In **InstallModel > About InstallModel**, confirm version 0.2.0 build 2.
+
+Developers may instead build the current source revision locally:
 
 From the repository checkout on each Mac, record:
 
@@ -85,14 +96,12 @@ uname -m
 system_profiler SPHardwareDataType
 ```
 
-The current development app is built locally with:
-
 ```bash
 ./scripts/build-app.sh debug
 open "build/Debug/InstallModel.app"
 ```
 
-The build requires an installed Swift/Xcode toolchain. Do not treat this ad-hoc-signed bundle as a distributable release. A signed and notarized test build is a separate backlog item.
+The local Debug build requires an installed Swift/Xcode toolchain and is only ad-hoc signed. Record whether the test used the published release or a source-built Debug app.
 
 ### Prepare the Hugging Face account on each Mac
 
@@ -165,7 +174,7 @@ Authentication is machine-specific. Repeat it on the target Mac. The app never a
 
 1. Connect the prepared SSD to the target Mac.
 2. Confirm the drive mounted with exactly the same volume name used during Stage 1.
-3. Build and launch the current app revision locally on the target Mac.
+3. Install the same signed release on the target Mac, or build and record the same source revision when performing development testing.
 4. Authenticate the target Mac with `hf auth login` and confirm `hf auth whoami` succeeds.
 5. Confirm **Detected Mac** reports the target chip, memory, architecture, and recommended profile.
 6. Select the license-confirmation checkbox.
@@ -208,9 +217,18 @@ Authentication is machine-specific. Repeat it on the target Mac. The app never a
 
 ## Final target-Mac generation test
 
-Installation and doctor success prove readiness, not audiovisual quality. Run the canonical five-second smoke test in [the README](../README.md#first-comparable-smoke-test).
+Installation and doctor success prove readiness, not audiovisual quality. In the app:
 
-Before running it:
+1. Open **Generate** and load the target installation root's `minimax-h3-paths.env`.
+2. Confirm the displayed hardware profile, memory limit, MP4 path, and JSON path.
+3. Use the canonical fox prompt from [the README](../README.md#first-comparable-smoke-test), output name `fox-test`, resolution `768x448`, duration `5`, steps `9`, and seed `42`.
+4. Leave **Require a muxed MP4** enabled and retain the installed memory/stream settings for the first comparison.
+5. Choose a new output name if either destination already exists; the app intentionally refuses to overwrite results.
+6. Select **Generate clip**, retain the complete console output, then use **Reveal MP4** and **Reveal JSON**.
+
+The equivalent Terminal command remains documented in the README for diagnosis and reproducibility. Installation and app generation do not replace media validation.
+
+For manual validation, load the environment in Terminal:
 
 ```bash
 source "/Users/example/MiniMax-H3/minimax-h3-paths.env"
@@ -288,3 +306,5 @@ Before sharing a test report publicly, replace real usernames, volume names, and
 - [Installer and app README](../README.md)
 - [Detailed MiniMax H3 Mac setup guide](MINIMAX_H3_MAC_SETUP_GUIDE.md)
 - [Development backlog](BACKLOG.md)
+- [Changelog](../CHANGELOG.md)
+- [0.2.0 release notes](RELEASE_NOTES_0.2.0.md)

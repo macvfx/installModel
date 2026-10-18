@@ -17,6 +17,21 @@ struct ContentView: View {
     private var theme: AppTheme { AppTheme(rawValue: storedTheme) ?? .system }
 
     var body: some View {
+        TabView {
+            setupPage
+                .tabItem { Label("Setup", systemImage: "shippingbox") }
+            GenerateView(
+                suggestedEnvironmentPath: URL(fileURLWithPath: storageRoot, isDirectory: true)
+                    .appendingPathComponent("minimax-h3-paths.env").path,
+                theme: theme
+            )
+            .tabItem { Label("Generate", systemImage: "film.stack") }
+        }
+        .tint(theme.accent)
+        .preferredColorScheme(theme.forcedColorScheme)
+    }
+
+    private var setupPage: some View {
         ZStack {
             background
                 .ignoresSafeArea()
@@ -35,8 +50,6 @@ struct ContentView: View {
             }
         }
         .foregroundStyle(theme.primaryText)
-        .tint(theme.accent)
-        .preferredColorScheme(theme.forcedColorScheme)
     }
 
     private var header: some View {

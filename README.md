@@ -11,10 +11,11 @@ The checked-in examples use fictional volume names and user paths. Generated env
 - [Two-Mac Testing User Guide](docs/TESTING_USER_GUIDE.md) — preparation-Mac download, external-drive handoff, target-Mac setup, generation validation, and evidence checklist.
 - [Development Backlog](docs/BACKLOG.md) — prioritized safety, readiness, generation, distribution, and performance work with acceptance gates.
 - [Detailed Mac Setup Guide](docs/MINIMAX_H3_MAC_SETUP_GUIDE.md) — manual MLX setup concepts, commands, profile details, troubleshooting, and references.
+- [Changelog](CHANGELOG.md) — released app versions and operator-visible changes.
 
-## Minimal SwiftUI app
+## InstallModel 0.2.0 app
 
-The repository also contains an early, deliberately small macOS SwiftUI front end. It:
+The repository also contains a deliberately small macOS SwiftUI app. It:
 
 - detects Apple Silicon, chip name, and unified memory;
 - recommends the same 24 GB, 64 GB, or 128 GB profile as the script;
@@ -23,9 +24,13 @@ The repository also contains an early, deliberately small macOS SwiftUI front en
 - explains the Stage 1 preparation-Mac and Stage 2 target-Mac workflow;
 - provides a persistent magic-wand appearance button that switches between the native System theme and a higher-contrast navy, cyan, and amber theme derived from the app icon;
 - runs Preview, Check, and Install / Repair through a bundled copy of the reviewed installer; and
-- shows the exact command and live combined output without asking for or storing a token.
+- shows the exact command and live combined output without asking for or storing a token;
+- loads the installer's `minimax-h3-paths.env` through a constrained data parser rather than a shell;
+- provides a Generate tab for the prompt, paired MP4/JSON name, resolution, duration, steps, seed, and advanced memory controls; and
+- invokes `caffeinate`, Python, and the verified FFmpeg path directly while displaying live generation output; and
+- includes native About and Help windows with links to the complete public documentation and [code.matx.ca](https://code.matx.ca).
 
-This is a development prototype, not a signed or sandboxed release. It intentionally leaves browser account creation, license acceptance, Homebrew installation, and `hf auth login` under the operator's control. Model generation remains in the documented runtime commands after installation.
+Version 0.2.0 is distributed as a Developer ID-signed and notarized Apple Silicon app. It is not sandboxed because it must run Homebrew, Python, model tools, and user-selected external-drive paths. Browser account creation, license acceptance, Homebrew installation, and `hf auth login` intentionally remain under the operator's control.
 
 Build, test, and run it with Xcode's active command-line toolchain:
 
@@ -43,14 +48,26 @@ open "build/Debug/InstallModel.app"
 
 The bundle is ad-hoc signed for local inspection. It is not Developer ID signed, notarized, or packaged for distribution. You can also open `Package.swift` in Xcode and run the `InstallModel` scheme. The package requires macOS 14 or later. When the audited root installer changes, update the bundled copy at `Sources/InstallModelApp/Resources/Scripts/install-minimax-h3-mac.sh` in the same commit and verify that both copies are identical.
 
-For a private test build that can be copied to other Apple Silicon Macs, use the Keychain-backed release script. It requires an installed Developer ID Application identity and a `notarytool` profile; it never accepts credentials as arguments:
+### Generate a test clip in the app
+
+1. Complete Install / Repair and confirm Check passes.
+2. Open the **Generate** tab. It suggests the `minimax-h3-paths.env` file below the installation root shown in Setup; choose a different file if the runtime is elsewhere.
+3. Select **Load**. Confirm that the displayed profile, memory limit, MP4 path, and JSON path match the target Mac and connected drive.
+4. Edit the prompt and output name. The app automatically uses that name for both `Outputs/<profile>/<name>.mp4` and `Profiles/<profile>/<name>.json`. It will not overwrite an existing result.
+5. Adjust resolution, duration, steps, and seed. Advanced controls begin with the values written by the installer and cannot raise the memory limit above that profile's guideline.
+6. Select **Generate clip**. Keep the Mac awake and any model drive connected. The live log shows the same generation progress as Terminal.
+7. When generation succeeds, use **Reveal MP4** or **Reveal JSON**.
+
+The environment file is read as constrained installer data; it is never sourced or executed. The generator is launched without a shell, so prompt punctuation remains argument text. The app does not yet perform the post-generation `ffprobe` and decode checks described in the testing guide; those remain a manual validation step.
+
+For a Developer ID release build, use the Keychain-backed release script. It requires an installed Developer ID Application identity and a `notarytool` profile; it never accepts credentials as arguments:
 
 ```bash
 ./scripts/build-sign-notarize-test-release.sh \
-  --output-dir "/Volumes/Example-Releases/InstallModel-0.1.0-1"
+  --output-dir "/Volumes/Example-Releases/InstallModel-0.2.0-build2"
 ```
 
-The script builds the Release app, applies the hardened runtime and secure timestamp, notarizes and staples the app and DMG, mounts the DMG, verifies its exact app with `codesign`, `stapler`, and Gatekeeper, and writes a SHA-256 file plus a release receipt. This produces a private test artifact only. GitHub publication remains a separate, explicitly approved operation.
+The script builds the Release app, applies the hardened runtime and secure timestamp, notarizes and staples the app and DMG, mounts the DMG, verifies its exact app with `codesign`, `stapler`, and Gatekeeper, and writes a SHA-256 file plus a release receipt. GitHub publication remains a separate, explicitly approved operation.
 
 ## Profiles
 

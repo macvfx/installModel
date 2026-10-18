@@ -12,7 +12,7 @@ OVERWRITE=0
 usage() {
   cat <<'EOF'
 Build, Developer ID sign, notarize, staple, and validate an Apple Silicon
-InstallModel test DMG.
+InstallModel release DMG.
 
 Usage:
   ./scripts/build-sign-notarize-test-release.sh --output-dir /absolute/path [--overwrite]
@@ -114,13 +114,13 @@ log "Stapling and validating app ticket"
 xcrun stapler staple "$SIGNED_APP"
 xcrun stapler validate "$SIGNED_APP"
 
-log "Creating test DMG"
+log "Creating release DMG"
 STAGE_DIR="$WORK_DIR/stage"
 UNSIGNED_DMG="$WORK_DIR/$ARTIFACT_BASE.dmg"
 mkdir -p "$STAGE_DIR"
 ditto "$SIGNED_APP" "$STAGE_DIR/$APP_NAME.app"
 ln -s /Applications "$STAGE_DIR/Applications"
-hdiutil create -volname "$APP_NAME $VERSION Test" -srcfolder "$STAGE_DIR" -format UDZO -ov "$UNSIGNED_DMG"
+hdiutil create -volname "$APP_NAME $VERSION" -srcfolder "$STAGE_DIR" -format UDZO -ov "$UNSIGNED_DMG"
 
 log "Applying Developer ID signature to DMG"
 codesign --force --timestamp --sign "$SIGNING_IDENTITY" "$UNSIGNED_DMG"
@@ -171,7 +171,7 @@ COMMIT="$(git -C "$PROJECT_ROOT" rev-parse HEAD)"
   printf 'Architecture: %s\n' "$ARCHITECTURES"
   printf 'Minimum macOS: %s\n' "$(plutil -extract LSMinimumSystemVersion raw "$SIGNED_APP/Contents/Info.plist")"
   printf 'Source commit: %s\n' "$COMMIT"
-  printf 'Distribution: private test build; not published\n'
+  printf 'Distribution: Developer ID release; publication verified separately\n'
   printf 'Signature: Developer ID Application with hardened runtime and secure timestamp\n'
   printf 'App notarization: Accepted (%s)\n' "$APP_SUBMISSION_ID"
   printf 'DMG notarization: Accepted (%s)\n' "$DMG_SUBMISSION_ID"
@@ -184,4 +184,4 @@ COMMIT="$(git -C "$PROJECT_ROOT" rev-parse HEAD)"
 
 (cd "$OUTPUT_DIR" && shasum -a 256 -c "$(basename "$CHECKSUM_FILE")")
 SUCCEEDED=1
-printf '\nPrivate test release completed:\n  %s\n  %s\n  %s\n' "$FINAL_DMG" "$CHECKSUM_FILE" "$RECEIPT_FILE"
+printf '\nRelease artifact completed:\n  %s\n  %s\n  %s\n' "$FINAL_DMG" "$CHECKSUM_FILE" "$RECEIPT_FILE"

@@ -1,6 +1,6 @@
 # MiniMax H3 Local Setup on Apple Silicon Macs
 
-**Status:** Source-backed setup guide, updated 2026-10-13
+**Status:** Source-backed setup guide, updated 2026-10-18
 
 **Audience:** Operators installing MiniMax H3 on Apple Silicon Macs with 24 GB, 64 GB, or 128 GB or more unified memory
 
@@ -70,7 +70,7 @@ Use at least:
 
 The examples use the fictional volume `/Volumes/Example-H3`. Substitute your actual model volume. Do not place access tokens in scripts, command arguments, screenshots, or documentation.
 
-A hardware-aware idempotent installer and operator README are provided at the [repository root](../README.md). The script detects memory, selects or accepts a 24 GB, 64 GB, or 128 GB profile, supports a separate portable model directory, installs missing dependencies, downloads the required assets, builds the selected conditioner, and runs the preflight doctor. Account creation, browser login, and license review remain manual.
+A hardware-aware idempotent installer and the InstallModel 0.2.0 SwiftUI app are provided at the [repository root](../README.md). The app and script detect memory, select or accept a 24 GB, 64 GB, or 128 GB profile, support a separate portable model directory, install missing dependencies, download required assets, build the selected conditioner, and run the preflight doctor. The app's Generate tab safely loads the installed environment and runs configurable test clips; account creation, browser login, license review, and final media acceptance remain manual.
 
 Create the working folders:
 

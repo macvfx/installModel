@@ -1,8 +1,8 @@
 # InstallModel Development Backlog
 
-**Status:** Planned work after the initial installer and SwiftUI prototype
+**Status:** Planned work after InstallModel 0.2.0 (build 2)
 
-This backlog distinguishes shipped prototype behavior from work that has not yet been implemented. Priority reflects safety and test value, not a promised delivery date.
+This backlog distinguishes shipped behavior from work that has not yet been implemented. Priority reflects safety and test value, not a promised delivery date.
 
 ## Current baseline
 
@@ -14,8 +14,10 @@ The repository currently provides:
 - Stage 1 preparation and Stage 2 target-Mac guidance;
 - read-only Preview and Check operations plus Install / Repair;
 - a SwiftUI development app with System and Magic themes;
-- an ad-hoc-signed local app-bundle builder; and
-- five unit tests covering profile thresholds, memory guidance, incompatible selection, Stage 2 arguments, and bundled installer availability.
+- a safe Generate tab with paired MP4/profile JSON naming and profile-aware settings;
+- About and in-app Help windows;
+- an ad-hoc local builder plus Developer ID signing, notarization, stapling, checksum, and Gatekeeper validation; and
+- nine unit tests covering setup profiles, external model reuse, safe environment parsing, and direct generation arguments.
 
 The two-Mac external-drive workflow has not yet completed formal end-to-end acceptance through the app.
 
@@ -116,7 +118,7 @@ The two-Mac external-drive workflow has not yet completed formal end-to-end acce
 - no token field, command-line token, or token logging is introduced; and
 - authentication is clearly marked as machine-specific.
 
-### P1.4 Minimal generation screen
+### P1.4 Minimal generation screen — initial implementation complete
 
 **Goal:** Run the installed model without requiring the operator to assemble the long Terminal command.
 
@@ -128,6 +130,8 @@ The two-Mac external-drive workflow has not yet completed formal end-to-end acce
 - prevents incompatible settings for the selected memory profile;
 - retains console and forward-profile output; and
 - reveals the completed MP4 in Finder.
+
+Implemented in the SwiftUI Generate tab. It safely parses known installer values, keeps the MP4 and forward-profile JSON names paired, uses direct process arguments and the installed FFmpeg path, constrains memory to the loaded profile guideline, streams console output, and reveals either generated file. Target-Mac generation and visual/audio review remain acceptance work rather than completed proof.
 
 ### P1.5 Media validation summary
 
@@ -165,6 +169,8 @@ The two-Mac external-drive workflow has not yet completed formal end-to-end acce
 - DMG is signed, notarized, checksummed, and validated by Gatekeeper;
 - a fresh download is verified separately from the build copy; and
 - signing, notarization, launch, and functional acceptance are reported as separate results.
+
+Implemented for 0.2.0 with exact-artifact validation and fresh-download verification required for each published release. This does not imply that the two-Mac or audiovisual acceptance gates are complete.
 
 ### P2.3 M2 Ultra 128 GB benchmark
 
