@@ -406,8 +406,18 @@ for relative_path in "${RUNTIME_REQUIRED_FILES[@]}"; do
   fi
 done
 if ! git -C "$RUNTIME_DIR" diff HEAD --quiet -- "${RUNTIME_REQUIRED_FILES[@]}"; then
-  die "required runtime files contain local modifications; move the runtime aside or restore those files before retrying"
+  say "Changed installer-managed runtime files:"
+  git -C "$RUNTIME_DIR" diff HEAD --name-only -- "${RUNTIME_REQUIRED_FILES[@]}" | while IFS= read -r relative_path; do
+    [[ -n "$relative_path" ]] && say "  $relative_path"
+  done
+  RUNTIME_BACKUP_DIR="$STORAGE_ROOT/InstallModel Backups/runtime-$(date '+%Y%m%d-%H%M%S')"
+  mkdir -p "$RUNTIME_BACKUP_DIR"
+  git -C "$RUNTIME_DIR" diff HEAD -- "${RUNTIME_REQUIRED_FILES[@]}" > "$RUNTIME_BACKUP_DIR/managed-runtime-files.patch"
+  say "Preserved changed managed runtime files as $RUNTIME_BACKUP_DIR/managed-runtime-files.patch"
+  say "Restoring installer-managed runtime files to the pinned revision"
+  git -C "$RUNTIME_DIR" checkout "$RUNTIME_COMMIT" -- "${RUNTIME_REQUIRED_FILES[@]}"
 fi
+git -C "$RUNTIME_DIR" diff HEAD --quiet -- "${RUNTIME_REQUIRED_FILES[@]}" || die "installer-managed runtime files could not be restored"
 say "Required runtime files are present and match the pinned revision"
 
 if [[ ! -x "$VENV_PYTHON" ]]; then say "Creating Python 3.12 virtual environment"; "$PREFERRED_PYTHON" -m venv "$RUNTIME_DIR/.venv"; fi

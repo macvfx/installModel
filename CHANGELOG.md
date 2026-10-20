@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.3 (build 5) — 2026-10-20
+
+### Fixed
+
+- Setup now remembers the last installation root, external Models folder, separate-model choice, workflow, and profile between app launches.
+- Generate remembers the last environment-file location and automatically reloads it when the file remains available.
+- Generation now checks for `FL2VA/model_index.json` and the configured transformer, text encoder, and Turbo LoRA folders before launching Python.
+- Install / Repair no longer stops at changed installer-managed runtime files. It saves their diff under `InstallModel Backups`, restores only the four managed files to the pinned revision, and continues the repair.
+
+### Diagnosis from 0.2.2 field logs
+
+- The checkpoint path was correct, but `/Volumes/.../MiniMax-H3/FL2VA/model_index.json` was absent.
+- Install / Repair would have downloaded the missing checkpoint metadata, but it stopped earlier because a managed runtime file differed from the pinned checkout.
+
 ## 0.2.2 (build 4) — 2026-10-20
 
 ### Fixed

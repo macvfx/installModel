@@ -1,6 +1,6 @@
 # InstallModel Two-Mac Testing Guide
 
-**Status:** Operator and release test guide for InstallModel 0.2.2 (build 4)
+**Status:** Operator and release test guide for InstallModel 0.2.3 (build 5)
 
 **Audience:** Testers preparing MiniMax H3 model assets on one Apple Silicon Mac and completing setup on a second Apple Silicon Mac
 
@@ -27,7 +27,7 @@ Current limitations:
 - media stream validation and audiovisual acceptance remain manual after generation; and
 - M2 Ultra 128 GB performance has not yet been measured.
 
-Do not use this test to overwrite an existing runtime with uncommitted changes. Do not place a Hugging Face token in the app, a command argument, a screenshot, or a test report.
+Install / Repair preserves a patch before restoring its four installer-managed runtime files. Unrelated runtime files remain untouched. Do not place a Hugging Face token in the app, a command argument, a screenshot, or a test report.
 
 ## Test roles and evidence
 
@@ -81,10 +81,10 @@ Keep the same external-volume name on both Macs. The model files are portable, b
 For the public release, download the DMG and checksum from the [GitHub Releases page](https://github.com/macvfx/installModel/releases). Verify the checksum before opening it:
 
 ```bash
-shasum -a 256 -c InstallModel-0.2.2-build4.sha256.txt
+shasum -a 256 -c InstallModel-0.2.3-build5.sha256.txt
 ```
 
-Drag `InstallModel.app` to Applications. The release must pass Gatekeeper without bypass instructions. In **InstallModel > About InstallModel**, confirm version 0.2.2 build 4.
+Drag `InstallModel.app` to Applications. The release must pass Gatekeeper without bypass instructions. In **InstallModel > About InstallModel**, confirm version 0.2.3 build 5.
 
 Developers may instead build the current source revision locally:
 
@@ -315,3 +315,4 @@ Before sharing a test report publicly, replace real usernames, volume names, and
 - [0.2.0 release notes](RELEASE_NOTES_0.2.0.md)
 - [0.2.1 private test release notes](RELEASE_NOTES_0.2.1.md)
 - [0.2.2 private test release notes](RELEASE_NOTES_0.2.2.md)
+- [0.2.3 private test release notes](RELEASE_NOTES_0.2.3.md)

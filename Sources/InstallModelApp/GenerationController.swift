@@ -83,7 +83,7 @@ final class GenerationController: ObservableObject {
         let issues = RuntimeSupport.validationIssues(
             runtimeURL: command.workingDirectoryURL,
             ffmpegPath: environment.ffmpeg
-        )
+        ) + ModelSupport.validationIssues(environment: environment)
         if let issue = issues.first {
             throw GenerationCommandError.invalid("\(issue). Locate the correct runtime or run Install / Repair for this exact installation.")
         }

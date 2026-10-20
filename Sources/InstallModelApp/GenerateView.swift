@@ -7,7 +7,7 @@ struct GenerateView: View {
     let onAdoptInstallation: (MiniMaxEnvironment) -> Void
 
     @StateObject private var controller = GenerationController()
-    @State private var environmentPath = ""
+    @AppStorage("installModel.environmentPath") private var environmentPath = ""
     @State private var environment: MiniMaxEnvironment?
     @State private var environmentMessage = "Load the environment file created by Install / Repair."
     @State private var runtimeIssue: String?
@@ -33,6 +33,9 @@ struct GenerateView: View {
         .foregroundStyle(theme.primaryText)
         .onAppear {
             if environmentPath.isEmpty { environmentPath = suggestedEnvironmentPath }
+            if environment == nil, FileManager.default.isReadableFile(atPath: environmentPath) {
+                loadEnvironment()
+            }
         }
         .onChange(of: suggestedEnvironmentPath) { _, newValue in
             if environment == nil { environmentPath = newValue }
@@ -77,7 +80,10 @@ struct GenerateView: View {
                 }
                 Text(environmentMessage)
                     .font(.caption)
-                    .foregroundStyle(environment == nil ? theme.secondaryText : Color.green)
+                    .foregroundStyle(environment == nil || runtimeIssue != nil ? theme.secondaryText : Color.green)
+                Text("The last environment-file location is remembered and reloaded automatically when it is available.")
+                    .font(.caption)
+                    .foregroundStyle(theme.secondaryText)
             }
         }
     }
@@ -256,10 +262,11 @@ struct GenerateView: View {
             environment = loaded
             settings.memoryLimitGB = loaded.memoryLimitGB
             settings.streamBlockGroupSize = loaded.streamBlockGroupSize
-            runtimeIssue = RuntimeSupport.validationIssues(
+            let issues = RuntimeSupport.validationIssues(
                 runtimeURL: URL(fileURLWithPath: loaded.runtime, isDirectory: true),
                 ffmpegPath: loaded.ffmpeg
-            ).first
+            ) + ModelSupport.validationIssues(environment: loaded)
+            runtimeIssue = issues.first
             onAdoptInstallation(loaded)
             environmentMessage = "Loaded \(loaded.profileID): \(loaded.memoryLimitGB) GB memory limit, stream group \(loaded.streamBlockGroupSize). Setup now targets this installation."
         } catch {
@@ -280,15 +287,15 @@ struct GenerateView: View {
         if panel.runModal() == .OK, let selected = panel.url {
             do {
                 let runtimeURL = try RuntimeSupport.runtimeURL(from: selected)
+                let updated = currentEnvironment.replacingRuntime(with: runtimeURL.path)
                 let issues = RuntimeSupport.validationIssues(
                     runtimeURL: runtimeURL,
                     ffmpegPath: currentEnvironment.ffmpeg
-                )
+                ) + ModelSupport.validationIssues(environment: updated)
                 guard issues.isEmpty else {
                     runtimeIssue = issues.joined(separator: " ")
                     return
                 }
-                let updated = currentEnvironment.replacingRuntime(with: runtimeURL.path)
                 environment = updated
                 runtimeIssue = nil
                 onAdoptInstallation(updated)

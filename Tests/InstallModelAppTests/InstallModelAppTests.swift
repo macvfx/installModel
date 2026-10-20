@@ -159,6 +159,38 @@ final class InstallModelAppTests: XCTestCase {
         )
     }
 
+    func testModelValidationReportsMissingCheckpointIndexBeforeGeneration() throws {
+        let models = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let checkpoint = models.appendingPathComponent("MiniMax-H3/FL2VA", isDirectory: true)
+        let transformer = models.appendingPathComponent("Transformer", isDirectory: true)
+        let encoder = models.appendingPathComponent("Encoder", isDirectory: true)
+        let turbo = models.appendingPathComponent("Turbo", isDirectory: true)
+        for directory in [checkpoint, transformer, encoder, turbo] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
+        defer { try? FileManager.default.removeItem(at: models) }
+
+        let environment = MiniMaxEnvironment(
+            runtime: "/Applications/example-runtime",
+            checkpoint: checkpoint.path,
+            transformer: transformer.path,
+            textEncoder: encoder.path,
+            turboLoRA: turbo.path,
+            outputs: "/tmp/outputs",
+            profiles: "/tmp/profiles",
+            ffmpeg: "/opt/homebrew/bin/ffmpeg",
+            profileID: "64gb",
+            memoryLimitGB: 48,
+            streamBlockGroupSize: 1
+        )
+
+        let missingIssues = ModelSupport.validationIssues(environment: environment)
+        XCTAssertTrue(missingIssues.contains(where: { $0.contains("model_index.json") }))
+
+        try "{}\n".write(to: checkpoint.appendingPathComponent("model_index.json"), atomically: true, encoding: .utf8)
+        XCTAssertEqual(ModelSupport.validationIssues(environment: environment), [])
+    }
+
     func testStorageProbeUsesExistingVolumeForNewChildFolder() throws {
         let volume = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: volume, withIntermediateDirectories: true)

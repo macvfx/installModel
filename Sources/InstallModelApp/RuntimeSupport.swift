@@ -76,3 +76,29 @@ enum RuntimeSupport {
         return apps.deletingLastPathComponent()
     }
 }
+
+enum ModelSupport {
+    static func validationIssues(
+        environment: MiniMaxEnvironment,
+        fileManager: FileManager = .default
+    ) -> [String] {
+        var issues: [String] = []
+        let modelIndex = URL(fileURLWithPath: environment.checkpoint, isDirectory: true)
+            .appendingPathComponent("model_index.json").path
+        if !fileManager.isReadableFile(atPath: modelIndex) {
+            issues.append("Checkpoint is incomplete; missing or unreadable: \(modelIndex). Run Install / Repair with this model folder selected")
+        }
+
+        for (label, path) in [
+            ("Transformer", environment.transformer),
+            ("Text encoder", environment.textEncoder),
+            ("Turbo LoRA", environment.turboLoRA)
+        ] {
+            var isDirectory: ObjCBool = false
+            if !fileManager.fileExists(atPath: path, isDirectory: &isDirectory) || !isDirectory.boolValue {
+                issues.append("\(label) folder is missing: \(path). Connect the model drive or run Install / Repair")
+            }
+        }
+        return issues
+    }
+}

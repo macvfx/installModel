@@ -5,16 +5,18 @@ struct ContentView: View {
     private let machine = SystemProbe.currentMachine()
 
     @StateObject private var installer = InstallerController()
-    @State private var workflow: WorkflowMode = .prepare
-    @State private var profile: InstallProfile = .automatic
-    @State private var storageRoot = FileManager.default.homeDirectoryForCurrentUser
+    @AppStorage("installModel.workflow") private var storedWorkflow = WorkflowMode.prepare.rawValue
+    @AppStorage("installModel.profile") private var storedProfile = InstallProfile.automatic.rawValue
+    @AppStorage("installModel.storageRoot") private var storageRoot = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent("MiniMax-H3").path
-    @State private var useSeparateModelsDirectory = true
-    @State private var modelsDirectory = "/Volumes/Example-H3-Models/Models"
+    @AppStorage("installModel.useSeparateModelsDirectory") private var useSeparateModelsDirectory = true
+    @AppStorage("installModel.modelsDirectory") private var modelsDirectory = "/Volumes/Example-H3-Models/Models"
     @State private var licenseAccepted = false
     @AppStorage("installModel.theme") private var storedTheme = AppTheme.system.rawValue
 
     private var theme: AppTheme { AppTheme(rawValue: storedTheme) ?? .system }
+    private var workflow: WorkflowMode { WorkflowMode(rawValue: storedWorkflow) ?? .prepare }
+    private var profile: InstallProfile { InstallProfile(rawValue: storedProfile) ?? .automatic }
 
     var body: some View {
         TabView {
@@ -102,7 +104,10 @@ struct ContentView: View {
     private var workflowSection: some View {
         ThemedSection(title: "3. Choose workflow", theme: theme) {
             VStack(alignment: .leading, spacing: 10) {
-                Picker("Workflow", selection: $workflow) {
+                Picker("Workflow", selection: Binding(
+                    get: { workflow },
+                    set: { storedWorkflow = $0.rawValue }
+                )) {
                     ForEach(WorkflowMode.allCases) { mode in Text(mode.rawValue).tag(mode) }
                 }
                 .pickerStyle(.segmented)
@@ -125,8 +130,14 @@ struct ContentView: View {
                         chooseDirectory(title: "Choose or create the Models folder", value: $modelsDirectory)
                     }
                 }
+                Text("The app remembers these locations, workflow, and profile for the next launch.")
+                    .font(.caption)
+                    .foregroundStyle(theme.secondaryText)
                 capacityRow(label: "Model files", info: modelStorage, minimumGiB: 120, recommendedGiB: 200)
-                Picker("Profile", selection: $profile) {
+                Picker("Profile", selection: Binding(
+                    get: { profile },
+                    set: { storedProfile = $0.rawValue }
+                )) {
                     ForEach(InstallProfile.allCases) { item in Text(item.title).tag(item) }
                 }
                 .frame(maxWidth: 320)
