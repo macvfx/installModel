@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.1 (build 3) — 2026-10-20
+
+### Fixed
+
+- Corrected generation preflight so `scripts/generate.py` is required to be readable, not executable. The pinned runtime intentionally stores the Python script with normal `0644` permissions.
+- Added runtime integrity checks to Check and Install / Repair. Missing managed runtime files are restored from the pinned commit, while locally modified required files stop with an explicit error.
+- Prevented repair from silently targeting a different installation by loading the installer root and model directory from `minimax-h3-paths.env` into Setup.
+
+### Added
+
+- **Locate runtime or generate.py…** recovery control with validation of Python, FFmpeg, `requirements.txt`, and the required runtime scripts.
+- Durable local logs for Preview, Check, Install / Repair, and Generate operations, with reveal controls in the app.
+- Keep-awake protection for installation and repair, plus best-effort interruption of the observed child process tree.
+- A 120 GiB free-space requirement for every model Install / Repair run, retaining the 200 GiB recommendation.
+- Regression coverage for ordinary non-executable Python scripts, missing `generate.py`, runtime selection, and installation-root synchronization data.
+
+### Boundaries
+
+- This build has source, unit-test, and local bundle validation but still requires the planned 64 GB second-Mac installation and real generation acceptance.
+- Post-generation `ffprobe`, full decode, prompt-adherence, motion, and audio review remain manual.
+
 ## 0.2.0 (build 2) — 2026-10-18
 
 ### Added

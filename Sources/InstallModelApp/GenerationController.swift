@@ -6,8 +6,10 @@ final class GenerationController: ObservableObject {
     @Published private(set) var isRunning = false
     @Published private(set) var lastOutputURL: URL?
     @Published private(set) var lastProfileURL: URL?
+    @Published private(set) var lastLogURL: URL?
 
     private var process: Process?
+    private var operationLog: DurableOperationLog?
 
     func run(environment: MiniMaxEnvironment, settings: GenerationSettings) {
         guard !isRunning else { return }
@@ -29,6 +31,16 @@ final class GenerationController: ObservableObject {
             task.standardOutput = pipe
             task.standardError = pipe
             output = "$ " + ([command.executableURL.path] + command.arguments).map(shellQuote).joined(separator: " ") + "\n\n"
+            do {
+                let log = try DurableOperationLog(category: "generation")
+                operationLog = log
+                lastLogURL = log.url
+                log.append(output)
+            } catch {
+                output += "WARNING: Could not create a durable generation log: \(error.localizedDescription)\n"
+                operationLog = nil
+                lastLogURL = nil
+            }
             isRunning = true
             lastOutputURL = command.outputURL
             lastProfileURL = command.profileURL
@@ -37,41 +49,49 @@ final class GenerationController: ObservableObject {
             pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
                 let data = handle.availableData
                 guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
-                Task { @MainActor in self?.output += text }
+                Task { @MainActor in self?.appendOutput(text) }
             }
             task.terminationHandler = { [weak self] completed in
                 let remainder = pipe.fileHandleForReading.readDataToEndOfFile()
                 let text = String(data: remainder, encoding: .utf8) ?? ""
                 Task { @MainActor in
                     pipe.fileHandleForReading.readabilityHandler = nil
-                    self?.output += text + "\nGeneration finished with exit code \(completed.terminationStatus).\n"
+                    self?.appendOutput(text + "\nGeneration finished with exit code \(completed.terminationStatus).\n")
                     self?.isRunning = false
                     self?.process = nil
+                    self?.operationLog?.close()
+                    self?.operationLog = nil
                 }
             }
             try task.run()
         } catch {
-            output += "ERROR: \(error.localizedDescription)\n"
+            appendOutput("ERROR: \(error.localizedDescription)\n")
             isRunning = false
             process = nil
+            operationLog?.close()
+            operationLog = nil
         }
     }
 
     func stop() {
         guard let process, process.isRunning else { return }
-        output += "\nStopping generation…\n"
-        process.interrupt()
+        appendOutput("\nStopping generation and its child processes…\n")
+        OwnedProcessTree.interrupt(rootPID: process.processIdentifier)
     }
 
     private func validateFiles(environment: MiniMaxEnvironment, command: GenerationCommand) throws {
-        let required = [
-            command.workingDirectoryURL.appendingPathComponent(".venv/bin/python").path,
-            command.workingDirectoryURL.appendingPathComponent("scripts/generate.py").path,
-            environment.ffmpeg
-        ]
-        for path in required where !FileManager.default.isExecutableFile(atPath: path) {
-            throw GenerationCommandError.invalid("Required executable is missing: \(path). Run Check or Install / Repair first.")
+        let issues = RuntimeSupport.validationIssues(
+            runtimeURL: command.workingDirectoryURL,
+            ffmpegPath: environment.ffmpeg
+        )
+        if let issue = issues.first {
+            throw GenerationCommandError.invalid("\(issue). Locate the correct runtime or run Install / Repair for this exact installation.")
         }
+    }
+
+    private func appendOutput(_ text: String) {
+        output += text
+        operationLog?.append(text)
     }
 
     private func shellQuote(_ value: String) -> String {

@@ -5,8 +5,10 @@ final class InstallerController: ObservableObject {
     @Published private(set) var output = "Ready. Run Preview or Check before installing.\n"
     @Published private(set) var isRunning = false
     @Published private(set) var lastExitCode: Int32?
+    @Published private(set) var lastLogURL: URL?
 
     private var process: Process?
+    private var operationLog: DurableOperationLog?
 
     static var scriptURL: URL? {
         Bundle.module.url(
@@ -26,8 +28,8 @@ final class InstallerController: ObservableObject {
         let arguments = request.arguments(for: operation)
         let task = Process()
         let pipe = Pipe()
-        task.executableURL = URL(fileURLWithPath: "/bin/bash")
-        task.arguments = [scriptURL.path] + arguments
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
+        task.arguments = ["-dimsu", "/bin/bash", scriptURL.path] + arguments
         task.standardOutput = pipe
         task.standardError = pipe
         var environment = ProcessInfo.processInfo.environment
@@ -35,6 +37,16 @@ final class InstallerController: ObservableObject {
         task.environment = environment
 
         output = "$ " + commandPreview(scriptPath: scriptURL.path, arguments: arguments) + "\n\n"
+        do {
+            let log = try DurableOperationLog(category: operation.logName)
+            operationLog = log
+            lastLogURL = log.url
+            log.append(output)
+        } catch {
+            output += "WARNING: Could not create a durable operation log: \(error.localizedDescription)\n"
+            operationLog = nil
+            lastLogURL = nil
+        }
         lastExitCode = nil
         isRunning = true
         process = task
@@ -42,7 +54,7 @@ final class InstallerController: ObservableObject {
         pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
             guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
-            Task { @MainActor in self?.output += text }
+            Task { @MainActor in self?.appendOutput(text) }
         }
 
         task.terminationHandler = { [weak self] completed in
@@ -50,11 +62,13 @@ final class InstallerController: ObservableObject {
             let remainderText = String(data: remainder, encoding: .utf8) ?? ""
             Task { @MainActor in
                 pipe.fileHandleForReading.readabilityHandler = nil
-                self?.output += remainderText
-                self?.output += "\nProcess finished with exit code \(completed.terminationStatus).\n"
+                self?.appendOutput(remainderText)
+                self?.appendOutput("\nProcess finished with exit code \(completed.terminationStatus).\n")
                 self?.lastExitCode = completed.terminationStatus
                 self?.isRunning = false
                 self?.process = nil
+                self?.operationLog?.close()
+                self?.operationLog = nil
             }
         }
 
@@ -62,20 +76,27 @@ final class InstallerController: ObservableObject {
             try task.run()
         } catch {
             pipe.fileHandleForReading.readabilityHandler = nil
-            output += "ERROR: \(error.localizedDescription)\n"
+            appendOutput("ERROR: \(error.localizedDescription)\n")
             isRunning = false
             process = nil
+            operationLog?.close()
+            operationLog = nil
         }
     }
 
     func stop() {
         guard let process, process.isRunning else { return }
-        output += "\nStopping installer…\n"
-        process.interrupt()
+        appendOutput("\nStopping installer and its child processes…\n")
+        OwnedProcessTree.interrupt(rootPID: process.processIdentifier)
     }
 
     private func commandPreview(scriptPath: String, arguments: [String]) -> String {
-        (["bash", scriptPath] + arguments).map(shellQuote).joined(separator: " ")
+        (["caffeinate", "-dimsu", "bash", scriptPath] + arguments).map(shellQuote).joined(separator: " ")
+    }
+
+    private func appendOutput(_ text: String) {
+        output += text
+        operationLog?.append(text)
     }
 
     private func shellQuote(_ value: String) -> String {
@@ -83,5 +104,15 @@ final class InstallerController: ObservableObject {
             return value
         }
         return "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+}
+
+private extension InstallerOperation {
+    var logName: String {
+        switch self {
+        case .preview: "preview"
+        case .check: "check"
+        case .install: "install-repair"
+        }
     }
 }

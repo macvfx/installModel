@@ -23,7 +23,8 @@ struct ContentView: View {
             GenerateView(
                 suggestedEnvironmentPath: URL(fileURLWithPath: storageRoot, isDirectory: true)
                     .appendingPathComponent("minimax-h3-paths.env").path,
-                theme: theme
+                theme: theme,
+                onAdoptInstallation: adoptInstallation
             )
             .tabItem { Label("Generate", systemImage: "film.stack") }
         }
@@ -168,13 +169,19 @@ struct ContentView: View {
 
     private var outputSection: some View {
         ThemedSection(title: "Installer output", theme: theme) {
-            ScrollView([.horizontal, .vertical]) {
-                Text(installer.output)
-                    .font(.system(.caption, design: .monospaced))
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
+            VStack(alignment: .leading, spacing: 8) {
+                ScrollView([.horizontal, .vertical]) {
+                    Text(installer.output)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                }
+                .frame(minHeight: 220)
+                if let logURL = installer.lastLogURL {
+                    Button("Reveal operation log") { reveal(logURL) }
+                        .help(logURL.path)
+                }
             }
-            .frame(minHeight: 220)
         }
     }
 
@@ -239,6 +246,25 @@ struct ContentView: View {
 
     private func run(_ operation: InstallerOperation) {
         installer.run(request(), operation: operation)
+    }
+
+    private func adoptInstallation(_ environment: MiniMaxEnvironment) {
+        if let root = environment.root {
+            storageRoot = root
+        } else if let derived = RuntimeSupport.installationRoot(
+            for: URL(fileURLWithPath: environment.runtime, isDirectory: true)
+        ) {
+            storageRoot = derived.path
+        }
+        if let models = environment.models {
+            modelsDirectory = models
+            useSeparateModelsDirectory = models != URL(fileURLWithPath: storageRoot, isDirectory: true)
+                .appendingPathComponent("Models", isDirectory: true).path
+        }
+    }
+
+    private func reveal(_ url: URL) {
+        NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
     private func open(_ value: String) {

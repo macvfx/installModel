@@ -4,11 +4,13 @@ import SwiftUI
 struct GenerateView: View {
     let suggestedEnvironmentPath: String
     let theme: AppTheme
+    let onAdoptInstallation: (MiniMaxEnvironment) -> Void
 
     @StateObject private var controller = GenerationController()
     @State private var environmentPath = ""
     @State private var environment: MiniMaxEnvironment?
     @State private var environmentMessage = "Load the environment file created by Install / Repair."
+    @State private var runtimeIssue: String?
     @State private var settings = GenerationSettings()
     @State private var showAdvanced = false
 
@@ -56,6 +58,22 @@ struct GenerateView: View {
                     Button("Choose…", action: chooseEnvironment)
                     Button("Load", action: loadEnvironment)
                         .buttonStyle(.borderedProminent)
+                }
+                HStack {
+                    Button("Locate runtime or generate.py…", action: locateRuntime)
+                        .disabled(environment == nil || controller.isRunning)
+                    if let environment {
+                        Text(environment.runtime)
+                            .font(.system(.caption, design: .monospaced))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .textSelection(.enabled)
+                    }
+                }
+                if let runtimeIssue {
+                    Label(runtimeIssue, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.red)
                 }
                 Text(environmentMessage)
                     .font(.caption)
@@ -154,13 +172,15 @@ struct GenerateView: View {
                 HStack {
                     Button("Generate clip", action: generate)
                         .buttonStyle(.borderedProminent)
-                        .disabled(environment == nil || settings.validationMessage != nil || outputAlreadyExists || controller.isRunning)
+                        .disabled(environment == nil || runtimeIssue != nil || settings.validationMessage != nil || outputAlreadyExists || controller.isRunning)
                     Button("Stop", role: .destructive) { controller.stop() }
                         .disabled(!controller.isRunning)
                     Button("Reveal MP4") { reveal(controller.lastOutputURL) }
                         .disabled(controller.lastOutputURL.map { !FileManager.default.fileExists(atPath: $0.path) } ?? true)
                     Button("Reveal JSON") { reveal(controller.lastProfileURL) }
                         .disabled(controller.lastProfileURL.map { !FileManager.default.fileExists(atPath: $0.path) } ?? true)
+                    Button("Reveal Log") { reveal(controller.lastLogURL) }
+                        .disabled(controller.lastLogURL == nil)
                     if controller.isRunning { ProgressView().controlSize(.small) }
                 }
             }
@@ -236,10 +256,50 @@ struct GenerateView: View {
             environment = loaded
             settings.memoryLimitGB = loaded.memoryLimitGB
             settings.streamBlockGroupSize = loaded.streamBlockGroupSize
-            environmentMessage = "Loaded \(loaded.profileID): \(loaded.memoryLimitGB) GB memory limit, stream group \(loaded.streamBlockGroupSize)."
+            runtimeIssue = RuntimeSupport.validationIssues(
+                runtimeURL: URL(fileURLWithPath: loaded.runtime, isDirectory: true),
+                ffmpegPath: loaded.ffmpeg
+            ).first
+            onAdoptInstallation(loaded)
+            environmentMessage = "Loaded \(loaded.profileID): \(loaded.memoryLimitGB) GB memory limit, stream group \(loaded.streamBlockGroupSize). Setup now targets this installation."
         } catch {
             environment = nil
+            runtimeIssue = nil
             environmentMessage = "ERROR: \(error.localizedDescription)"
+        }
+    }
+
+    private func locateRuntime() {
+        guard let currentEnvironment = environment else { return }
+        let panel = NSOpenPanel()
+        panel.title = "Choose the MiniMax runtime folder or scripts/generate.py"
+        panel.prompt = "Use Runtime"
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let selected = panel.url {
+            do {
+                let runtimeURL = try RuntimeSupport.runtimeURL(from: selected)
+                let issues = RuntimeSupport.validationIssues(
+                    runtimeURL: runtimeURL,
+                    ffmpegPath: currentEnvironment.ffmpeg
+                )
+                guard issues.isEmpty else {
+                    runtimeIssue = issues.joined(separator: " ")
+                    return
+                }
+                let updated = currentEnvironment.replacingRuntime(with: runtimeURL.path)
+                environment = updated
+                runtimeIssue = nil
+                onAdoptInstallation(updated)
+                if updated.root != nil {
+                    environmentMessage = "Using the validated runtime at \(runtimeURL.path). Setup now targets this installation; the environment file has not been rewritten."
+                } else {
+                    environmentMessage = "Using the validated runtime at \(runtimeURL.path). It is outside the standard <root>/Apps/minimax-h3-mac layout, so generation can use it but Setup cannot repair it automatically."
+                }
+            } catch {
+                runtimeIssue = error.localizedDescription
+            }
         }
     }
 

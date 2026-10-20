@@ -1,6 +1,6 @@
 # InstallModel Two-Mac Testing Guide
 
-**Status:** Operator and release test guide for InstallModel 0.2.0 (build 2)
+**Status:** Operator and release test guide for InstallModel 0.2.1 (build 3)
 
 **Audience:** Testers preparing MiniMax H3 model assets on one Apple Silicon Mac and completing setup on a second Apple Silicon Mac
 
@@ -22,7 +22,8 @@ Current behavior:
 Current limitations:
 
 - Hugging Face account creation, license review, and `hf auth login` remain manual;
-- the app does not yet keep a separate durable log file or safely terminate every child process;
+- operation logs are written under `~/Library/Logs/InstallModel`; preserve the revealed log for every test phase;
+- Stop interrupts the observed process tree, but cancellation remains a hold point: confirm no `hf`, Python, or FFmpeg child remains before disconnecting storage;
 - media stream validation and audiovisual acceptance remain manual after generation; and
 - M2 Ultra 128 GB performance has not yet been measured.
 
@@ -63,7 +64,7 @@ flowchart LR
 
 - Two Apple Silicon Macs. The supported workflow requires at least a 24 GB-class Mac; the installer rejects less than 20 GiB detected memory.
 - A fast external SSD formatted as APFS, preferably Thunderbolt or USB4 NVMe.
-- At least 200 GB free before initial preparation. The installer requires at least 120 GiB when the source model is not present and warns below the 200 GiB recommendation.
+- At least 200 GB free before initial preparation. Every model Install / Repair run requires at least 120 GiB and warns below the 200 GiB recommendation.
 - AC power, adequate cooling, and enough uninterrupted time for a large download and model preparation.
 - A stable Internet connection on both Macs.
 
@@ -80,10 +81,10 @@ Keep the same external-volume name on both Macs. The model files are portable, b
 For the public release, download the DMG and checksum from the [GitHub Releases page](https://github.com/macvfx/installModel/releases). Verify the checksum before opening it:
 
 ```bash
-shasum -a 256 -c InstallModel-0.2.0-build2.sha256.txt
+shasum -a 256 -c InstallModel-0.2.1-build3.sha256.txt
 ```
 
-Drag `InstallModel.app` to Applications. The release must pass Gatekeeper without bypass instructions. In **InstallModel > About InstallModel**, confirm version 0.2.0 build 2.
+Drag `InstallModel.app` to Applications. The release must pass Gatekeeper without bypass instructions. In **InstallModel > About InstallModel**, confirm version 0.2.1 build 3.
 
 Developers may instead build the current source revision locally:
 
@@ -308,3 +309,4 @@ Before sharing a test report publicly, replace real usernames, volume names, and
 - [Development backlog](BACKLOG.md)
 - [Changelog](../CHANGELOG.md)
 - [0.2.0 release notes](RELEASE_NOTES_0.2.0.md)
+- [0.2.1 private test release notes](RELEASE_NOTES_0.2.1.md)

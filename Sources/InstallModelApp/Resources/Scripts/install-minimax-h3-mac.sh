@@ -19,6 +19,12 @@ CHECK_ONLY=0
 LICENSE_ACCEPTED=0
 SKIP_MODELS=0
 CHECK_FAILURES=0
+RUNTIME_REQUIRED_FILES=(
+  requirements.txt
+  scripts/generate.py
+  scripts/doctor.py
+  scripts/quantize_text_encoder.py
+)
 
 usage() {
   cat <<'EOF'
@@ -260,12 +266,16 @@ fi
 AVAILABLE_KIB="$(df -Pk "$MODELS_STORAGE_PROBE" | awk 'NR == 2 {print $4}')"
 AVAILABLE_GIB=$((AVAILABLE_KIB / 1048576))
 say "Available model-volume space: ${AVAILABLE_GIB} GiB"
-if [[ "$SKIP_MODELS" -eq 0 && ! -f "$SOURCE_ENCODER_DIR/model.safetensors.index.json" ]]; then
+if [[ "$SKIP_MODELS" -eq 0 && "$CHECK_ONLY" -eq 0 ]]; then
   if [[ "$AVAILABLE_GIB" -lt 120 ]]; then
-    die "at least 120 GiB free is required; 200 GiB is recommended before initial preparation"
+    die "at least 120 GiB free is required for Install / Repair; 200 GiB is recommended"
   elif [[ "$AVAILABLE_GIB" -lt 200 ]]; then
     warn "less than the recommended 200 GiB is free; monitor the model volume"
   fi
+elif [[ "$CHECK_ONLY" -eq 1 && "$AVAILABLE_GIB" -lt 20 ]]; then
+  check_missing "at least 20 GiB free on the model volume"
+elif [[ "$AVAILABLE_GIB" -lt 20 ]]; then
+  die "at least 20 GiB free is required for tools-only installation"
 fi
 
 REQUIRED_COMMANDS="git hf"
@@ -286,6 +296,14 @@ if [[ "$CHECK_ONLY" -eq 1 ]]; then
   if [[ -d "$RUNTIME_DIR/.git" ]]; then
     CURRENT_COMMIT="$(git -C "$RUNTIME_DIR" rev-parse HEAD 2>/dev/null || true)"
     if [[ "$CURRENT_COMMIT" == "$RUNTIME_COMMIT" ]]; then check_ok "runtime pinned at $RUNTIME_COMMIT"; else check_missing "runtime revision (found ${CURRENT_COMMIT:-unknown}; expected $RUNTIME_COMMIT)"; fi
+    for relative_path in "${RUNTIME_REQUIRED_FILES[@]}"; do
+      if [[ -r "$RUNTIME_DIR/$relative_path" ]]; then check_ok "runtime file $relative_path"; else check_missing "runtime file $RUNTIME_DIR/$relative_path"; fi
+    done
+    if git -C "$RUNTIME_DIR" diff HEAD --quiet -- "${RUNTIME_REQUIRED_FILES[@]}"; then
+      check_ok "required runtime files match the pinned checkout"
+    else
+      check_missing "required runtime files are modified or deleted"
+    fi
   else
     check_missing "runtime repository at $RUNTIME_DIR"
   fi
@@ -345,6 +363,21 @@ if [[ "$CURRENT_COMMIT" != "$RUNTIME_COMMIT" ]]; then
   git -C "$RUNTIME_DIR" checkout --detach "$RUNTIME_COMMIT"
 fi
 say "Runtime is pinned at $RUNTIME_COMMIT"
+
+for relative_path in "${RUNTIME_REQUIRED_FILES[@]}"; do
+  if [[ ! -r "$RUNTIME_DIR/$relative_path" ]]; then
+    if git -C "$RUNTIME_DIR" cat-file -e "$RUNTIME_COMMIT:$relative_path" 2>/dev/null; then
+      say "Restoring missing managed runtime file: $relative_path"
+      git -C "$RUNTIME_DIR" checkout "$RUNTIME_COMMIT" -- "$relative_path"
+    else
+      die "required runtime file is absent from the pinned revision: $relative_path"
+    fi
+  fi
+done
+if ! git -C "$RUNTIME_DIR" diff HEAD --quiet -- "${RUNTIME_REQUIRED_FILES[@]}"; then
+  die "required runtime files contain local modifications; move the runtime aside or restore those files before retrying"
+fi
+say "Required runtime files are present and match the pinned revision"
 
 if [[ ! -x "$VENV_PYTHON" ]]; then say "Creating Python 3.12 virtual environment"; "$PREFERRED_PYTHON" -m venv "$RUNTIME_DIR/.venv"; fi
 "$VENV_PYTHON" -m pip install --upgrade pip

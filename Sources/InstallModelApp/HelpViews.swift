@@ -21,7 +21,7 @@ struct InstallModelCommands: Commands {
 struct AboutView: View {
     private var version: String {
         let info = Bundle.main.infoDictionary
-        let marketing = info?["CFBundleShortVersionString"] as? String ?? "0.2.0"
+        let marketing = info?["CFBundleShortVersionString"] as? String ?? "0.2.1"
         let build = info?["CFBundleVersion"] as? String ?? "2"
         return "Version \(marketing) (Build \(build))"
     }

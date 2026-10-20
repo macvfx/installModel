@@ -13,7 +13,7 @@ The checked-in examples use fictional volume names and user paths. Generated env
 - [Detailed Mac Setup Guide](docs/MINIMAX_H3_MAC_SETUP_GUIDE.md) — manual MLX setup concepts, commands, profile details, troubleshooting, and references.
 - [Changelog](CHANGELOG.md) — released app versions and operator-visible changes.
 
-## InstallModel 0.2.0 app
+## InstallModel 0.2.1 app
 
 The repository also contains a deliberately small macOS SwiftUI app. It:
 
@@ -26,11 +26,14 @@ The repository also contains a deliberately small macOS SwiftUI app. It:
 - runs Preview, Check, and Install / Repair through a bundled copy of the reviewed installer; and
 - shows the exact command and live combined output without asking for or storing a token;
 - loads the installer's `minimax-h3-paths.env` through a constrained data parser rather than a shell;
-- provides a Generate tab for the prompt, paired MP4/JSON name, resolution, duration, steps, seed, and advanced memory controls; and
-- invokes `caffeinate`, Python, and the verified FFmpeg path directly while displaying live generation output; and
+- provides a Generate tab for the prompt, paired MP4/JSON name, resolution, duration, steps, seed, and advanced memory controls;
+- invokes `caffeinate`, Python, and the verified FFmpeg path directly while displaying live generation output;
+- accepts either the installed runtime folder or `scripts/generate.py`, validates the complete runtime, and synchronizes Setup with the loaded environment before repair;
+- verifies Python source files as readable data rather than incorrectly requiring executable permission;
+- keeps installation awake, records durable local operation logs, and interrupts the observed installer/generator child process tree;
 - includes native About and Help windows with links to the complete public documentation and [code.matx.ca](https://code.matx.ca).
 
-Version 0.2.0 is distributed as a Developer ID-signed and notarized Apple Silicon app. It is not sandboxed because it must run Homebrew, Python, model tools, and user-selected external-drive paths. Browser account creation, license acceptance, Homebrew installation, and `hf auth login` intentionally remain under the operator's control.
+Version 0.2.1 is prepared as a Developer ID-signed and notarized Apple Silicon private test app. It is not sandboxed because it must run Homebrew, Python, model tools, and user-selected external-drive paths. Browser account creation, license acceptance, Homebrew installation, and `hf auth login` intentionally remain under the operator's control.
 
 Build, test, and run it with Xcode's active command-line toolchain:
 
@@ -64,7 +67,7 @@ For a Developer ID release build, use the Keychain-backed release script. It req
 
 ```bash
 ./scripts/build-sign-notarize-test-release.sh \
-  --output-dir "/Volumes/Example-Releases/InstallModel-0.2.0-build2"
+  --output-dir "/Volumes/Example-Releases/InstallModel-0.2.1-build3"
 ```
 
 The script builds the Release app, applies the hardened runtime and secure timestamp, notarizes and staples the app and DMG, mounts the DMG, verifies its exact app with `codesign`, `stapler`, and Gatekeeper, and writes a SHA-256 file plus a release receipt. GitHub publication remains a separate, explicitly approved operation.

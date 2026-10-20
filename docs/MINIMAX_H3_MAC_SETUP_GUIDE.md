@@ -70,7 +70,7 @@ Use at least:
 
 The examples use the fictional volume `/Volumes/Example-H3`. Substitute your actual model volume. Do not place access tokens in scripts, command arguments, screenshots, or documentation.
 
-A hardware-aware idempotent installer and the InstallModel 0.2.0 SwiftUI app are provided at the [repository root](../README.md). The app and script detect memory, select or accept a 24 GB, 64 GB, or 128 GB profile, support a separate portable model directory, install missing dependencies, download required assets, build the selected conditioner, and run the preflight doctor. The app's Generate tab safely loads the installed environment and runs configurable test clips; account creation, browser login, license review, and final media acceptance remain manual.
+A hardware-aware idempotent installer and the InstallModel 0.2.1 SwiftUI app are provided at the [repository root](../README.md). The app and script detect memory, select or accept a 24 GB, 64 GB, or 128 GB profile, support a separate portable model directory, install missing dependencies, download required assets, build the selected conditioner, and run the preflight doctor. The app's Generate tab safely loads the installed environment, can locate and validate the runtime or `scripts/generate.py`, synchronizes Setup to that installation, and runs configurable test clips; account creation, browser login, license review, and final media acceptance remain manual.
 
 Create the working folders:
 

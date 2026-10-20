@@ -50,6 +50,8 @@ final class InstallModelAppTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         let file = directory.appendingPathComponent("minimax-h3-paths.env")
         let source = """
+        export MINIMAX_H3_ROOT=/Users/example/MiniMax-H3
+        export MINIMAX_H3_MODELS=/Volumes/Model\\ Drive/Models
         export MINIMAX_H3_RUNTIME=/Volumes/Model\\ Drive/Runtime
         export MINIMAX_H3_CHECKPOINT=/Volumes/Model\\ Drive/Models/Checkpoint
         export MINIMAX_H3_TRANSFORMER=/Volumes/Model\\ Drive/Models/Transformer
@@ -66,6 +68,8 @@ final class InstallModelAppTests: XCTestCase {
         try source.write(to: file, atomically: true, encoding: .utf8)
 
         let environment = try MiniMaxEnvironment.load(from: file)
+        XCTAssertEqual(environment.root, "/Users/example/MiniMax-H3")
+        XCTAssertEqual(environment.models, "/Volumes/Model Drive/Models")
         XCTAssertEqual(environment.runtime, "/Volumes/Model Drive/Runtime")
         XCTAssertEqual(environment.memoryLimitGB, 48)
         XCTAssertEqual(environment.profileID, "m1-max-64gb")
@@ -108,5 +112,50 @@ final class InstallModelAppTests: XCTestCase {
         var settings = GenerationSettings()
         settings.outputName = "other/frosty"
         XCTAssertNotNil(settings.validationMessage)
+    }
+
+    func testRuntimeLocatorAcceptsGenerateScriptAndDerivesInstallationRoot() throws {
+        let installation = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let runtime = installation.appendingPathComponent("Apps/minimax-h3-mac", isDirectory: true)
+        let scripts = runtime.appendingPathComponent("scripts", isDirectory: true)
+        try FileManager.default.createDirectory(at: scripts, withIntermediateDirectories: true)
+        let generate = scripts.appendingPathComponent("generate.py")
+        try "# generated fixture\n".write(to: generate, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: installation) }
+
+        XCTAssertEqual(try RuntimeSupport.runtimeURL(from: generate), runtime)
+        XCTAssertEqual(RuntimeSupport.installationRoot(for: runtime)?.path, installation.path)
+    }
+
+    func testRuntimeValidationTreatsPythonScriptAsReadableNotExecutable() throws {
+        let runtime = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let python = runtime.appendingPathComponent(".venv/bin/python")
+        let ffmpeg = runtime.appendingPathComponent("tools/ffmpeg")
+        try FileManager.default.createDirectory(at: python.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: ffmpeg.deletingLastPathComponent(), withIntermediateDirectories: true)
+        for relativePath in RuntimeSupport.requiredReadableFiles {
+            let file = runtime.appendingPathComponent(relativePath)
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try "# readable fixture\n".write(to: file, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: file.path)
+        }
+        try "#!/bin/sh\n".write(to: python, atomically: true, encoding: .utf8)
+        try "#!/bin/sh\n".write(to: ffmpeg, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: python.path)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: ffmpeg.path)
+        defer { try? FileManager.default.removeItem(at: runtime) }
+
+        XCTAssertEqual(RuntimeSupport.validationIssues(runtimeURL: runtime, ffmpegPath: ffmpeg.path), [])
+    }
+
+    func testRuntimeValidationReportsMissingGenerateScript() throws {
+        let runtime = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: runtime, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: runtime) }
+
+        XCTAssertTrue(
+            RuntimeSupport.validationIssues(runtimeURL: runtime)
+                .contains(where: { $0.contains("scripts/generate.py") })
+        )
     }
 }

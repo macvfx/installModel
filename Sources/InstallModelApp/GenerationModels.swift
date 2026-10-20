@@ -17,6 +17,8 @@ enum MiniMaxEnvironmentError: LocalizedError {
 }
 
 struct MiniMaxEnvironment: Equatable {
+    let root: String?
+    let models: String?
     let runtime: String
     let checkpoint: String
     let transformer: String
@@ -29,12 +31,61 @@ struct MiniMaxEnvironment: Equatable {
     let memoryLimitGB: Int
     let streamBlockGroupSize: Int
 
+    init(
+        root: String? = nil,
+        models: String? = nil,
+        runtime: String,
+        checkpoint: String,
+        transformer: String,
+        textEncoder: String,
+        turboLoRA: String,
+        outputs: String,
+        profiles: String,
+        ffmpeg: String,
+        profileID: String,
+        memoryLimitGB: Int,
+        streamBlockGroupSize: Int
+    ) {
+        self.root = root
+        self.models = models
+        self.runtime = runtime
+        self.checkpoint = checkpoint
+        self.transformer = transformer
+        self.textEncoder = textEncoder
+        self.turboLoRA = turboLoRA
+        self.outputs = outputs
+        self.profiles = profiles
+        self.ffmpeg = ffmpeg
+        self.profileID = profileID
+        self.memoryLimitGB = memoryLimitGB
+        self.streamBlockGroupSize = streamBlockGroupSize
+    }
+
+    func replacingRuntime(with path: String) -> MiniMaxEnvironment {
+        MiniMaxEnvironment(
+            root: RuntimeSupport.installationRoot(for: URL(fileURLWithPath: path, isDirectory: true))?.path,
+            models: models,
+            runtime: path,
+            checkpoint: checkpoint,
+            transformer: transformer,
+            textEncoder: textEncoder,
+            turboLoRA: turboLoRA,
+            outputs: outputs,
+            profiles: profiles,
+            ffmpeg: ffmpeg,
+            profileID: profileID,
+            memoryLimitGB: memoryLimitGB,
+            streamBlockGroupSize: streamBlockGroupSize
+        )
+    }
+
     static func load(from url: URL) throws -> MiniMaxEnvironment {
         let text: String
         do { text = try String(contentsOf: url, encoding: .utf8) }
         catch { throw MiniMaxEnvironmentError.unreadable(error.localizedDescription) }
 
         let allowed = Set([
+            "MINIMAX_H3_ROOT", "MINIMAX_H3_MODELS",
             "MINIMAX_H3_RUNTIME", "MINIMAX_H3_CHECKPOINT", "MINIMAX_H3_TRANSFORMER",
             "MINIMAX_H3_TEXT_ENCODER", "MINIMAX_H3_TURBO", "MINIMAX_H3_TURBO_LORA",
             "MINIMAX_H3_OUTPUTS", "MINIMAX_H3_PROFILES", "MINIMAX_H3_FFMPEG",
@@ -66,10 +117,17 @@ struct MiniMaxEnvironment: Equatable {
             guard value.hasPrefix("/") else { throw MiniMaxEnvironmentError.invalidPath(key) }
             return value
         }
+        func optionalPath(_ key: String) throws -> String? {
+            guard let value = values[key], !value.isEmpty else { return nil }
+            guard value.hasPrefix("/") else { throw MiniMaxEnvironmentError.invalidPath(key) }
+            return value
+        }
 
         let turbo = values["MINIMAX_H3_TURBO_LORA"] ?? values["MINIMAX_H3_TURBO"]
         guard let turbo, turbo.hasPrefix("/") else { throw MiniMaxEnvironmentError.missing("MINIMAX_H3_TURBO_LORA") }
         return MiniMaxEnvironment(
+            root: try optionalPath("MINIMAX_H3_ROOT"),
+            models: try optionalPath("MINIMAX_H3_MODELS"),
             runtime: try path("MINIMAX_H3_RUNTIME"),
             checkpoint: try path("MINIMAX_H3_CHECKPOINT"),
             transformer: try path("MINIMAX_H3_TRANSFORMER"),
