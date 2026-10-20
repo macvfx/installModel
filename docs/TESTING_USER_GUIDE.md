@@ -1,6 +1,6 @@
 # InstallModel Two-Mac Testing Guide
 
-**Status:** Operator and release test guide for InstallModel 0.2.1 (build 3)
+**Status:** Operator and release test guide for InstallModel 0.2.2 (build 4)
 
 **Audience:** Testers preparing MiniMax H3 model assets on one Apple Silicon Mac and completing setup on a second Apple Silicon Mac
 
@@ -81,10 +81,10 @@ Keep the same external-volume name on both Macs. The model files are portable, b
 For the public release, download the DMG and checksum from the [GitHub Releases page](https://github.com/macvfx/installModel/releases). Verify the checksum before opening it:
 
 ```bash
-shasum -a 256 -c InstallModel-0.2.1-build3.sha256.txt
+shasum -a 256 -c InstallModel-0.2.2-build4.sha256.txt
 ```
 
-Drag `InstallModel.app` to Applications. The release must pass Gatekeeper without bypass instructions. In **InstallModel > About InstallModel**, confirm version 0.2.1 build 3.
+Drag `InstallModel.app` to Applications. The release must pass Gatekeeper without bypass instructions. In **InstallModel > About InstallModel**, confirm version 0.2.2 build 4.
 
 Developers may instead build the current source revision locally:
 
@@ -127,7 +127,7 @@ Authentication is machine-specific. Repeat it on the target Mac. The app never a
 4. Optionally use the wand button to test the Magic theme. Theme choice does not change installer behavior.
 5. Complete the Hugging Face and license steps, then select the license-confirmation checkbox.
 6. Under **Choose workflow**, select **Stage 1: Prepare models**.
-7. Set **Local installation root** to a local path, for example:
+7. Set **Installation root** to a local path, for example:
 
    ```text
    /Users/example/MiniMax-H3-Prepare
@@ -138,6 +138,8 @@ Authentication is machine-specific. Repeat it on the target Mac. The app never a
    ```text
    /Volumes/Example-H3-Models/Models
    ```
+
+   Confirm the **Model files** capacity row names `Example-H3-Models`, labels it as an attached volume, shows its `/Volumes/Example-H3-Models` mount point, and reports that drive's free space. Disconnecting the drive must change the row to an invalid mounted-folder warning and disable **Install / Repair**.
 
 9. Leave **Profile** set to **Automatic** unless the test plan explicitly requires a compatible override.
 10. Click **Preview configuration**. Confirm the displayed chip, detected memory, selected profile, storage root, model directory, conditioner precision, and memory guideline.
@@ -191,6 +193,8 @@ Authentication is machine-specific. Repeat it on the target Mac. The app never a
    ```text
    /Volumes/Example-H3-Models/Models
    ```
+
+   Confirm the **Model files** capacity row resolves to the attached SSD and reports at least 120 GiB free; 200 GiB remains recommended. Do not continue if it displays the internal volume or an unmounted-folder warning.
 
 10. Leave the profile on **Automatic** for the primary acceptance run.
 11. Click **Preview configuration** and record the target profile. Expected examples are:
@@ -310,3 +314,4 @@ Before sharing a test report publicly, replace real usernames, volume names, and
 - [Changelog](../CHANGELOG.md)
 - [0.2.0 release notes](RELEASE_NOTES_0.2.0.md)
 - [0.2.1 private test release notes](RELEASE_NOTES_0.2.1.md)
+- [0.2.2 private test release notes](RELEASE_NOTES_0.2.2.md)

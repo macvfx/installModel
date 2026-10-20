@@ -250,8 +250,17 @@ TURBO_DIR="$MODELS_DIR/MiniMax-H3-Turbo-v4-step600-EMA-MLX"
 print_configuration
 ROOT_PARENT="$(dirname "$STORAGE_ROOT")"
 [[ -d "$ROOT_PARENT" ]] || die "storage parent does not exist: $ROOT_PARENT"
+if [[ -d "$STORAGE_ROOT" ]]; then
+  INSTALL_STORAGE_PROBE="$STORAGE_ROOT"
+else
+  INSTALL_STORAGE_PROBE="$ROOT_PARENT"
+fi
 if [[ -n "$MODELS_DIR_OVERRIDE" ]]; then
-  MODELS_STORAGE_PROBE="$(dirname "$MODELS_DIR")"
+  if [[ -d "$MODELS_DIR" ]]; then
+    MODELS_STORAGE_PROBE="$MODELS_DIR"
+  else
+    MODELS_STORAGE_PROBE="$(dirname "$MODELS_DIR")"
+  fi
 elif [[ -d "$STORAGE_ROOT" ]]; then
   MODELS_STORAGE_PROBE="$STORAGE_ROOT"
 else
@@ -259,13 +268,35 @@ else
 fi
 [[ -d "$MODELS_STORAGE_PROBE" ]] || die "model-directory parent does not exist: $MODELS_STORAGE_PROBE"
 
+describe_storage() {
+  local label="$1" probe="$2" info volume_name mount_point device_name
+  info="$(diskutil info "$probe" 2>/dev/null || true)"
+  volume_name="$(printf '%s\n' "$info" | awk -F ': *' '/Volume Name/ {print $2; exit}')"
+  mount_point="$(printf '%s\n' "$info" | awk -F ': *' '/Mount Point/ {print $2; exit}')"
+  device_name="$(df -Pk "$probe" | awk 'NR == 2 {print $1}')"
+  say "$label storage: ${volume_name:-$device_name}${mount_point:+ mounted at $mount_point} (probe: $probe)"
+}
+
+describe_storage "Installation" "$INSTALL_STORAGE_PROBE"
+INSTALL_AVAILABLE_KIB="$(df -Pk "$INSTALL_STORAGE_PROBE" | awk 'NR == 2 {print $4}')"
+INSTALL_AVAILABLE_GIB=$((INSTALL_AVAILABLE_KIB / 1048576))
+say "Available installation-volume space: ${INSTALL_AVAILABLE_GIB} GiB"
+if [[ "$INSTALL_AVAILABLE_GIB" -lt 20 ]]; then
+  if [[ "$CHECK_ONLY" -eq 1 ]]; then
+    check_missing "at least 20 GiB free on the selected installation volume"
+  else
+    die "at least 20 GiB free is required on the selected installation volume"
+  fi
+fi
+
+describe_storage "Model" "$MODELS_STORAGE_PROBE"
 FILESYSTEM_NAME="$(diskutil info "$MODELS_STORAGE_PROBE" 2>/dev/null | awk -F ': *' '/File System Personality/ {print $2; exit}' || true)"
 if [[ -n "$FILESYSTEM_NAME" && "$FILESYSTEM_NAME" != *"APFS"* ]]; then
   warn "model storage reports '$FILESYSTEM_NAME'; APFS on a fast SSD is recommended"
 fi
 AVAILABLE_KIB="$(df -Pk "$MODELS_STORAGE_PROBE" | awk 'NR == 2 {print $4}')"
 AVAILABLE_GIB=$((AVAILABLE_KIB / 1048576))
-say "Available model-volume space: ${AVAILABLE_GIB} GiB"
+say "Available selected model-volume space: ${AVAILABLE_GIB} GiB"
 if [[ "$SKIP_MODELS" -eq 0 && "$CHECK_ONLY" -eq 0 ]]; then
   if [[ "$AVAILABLE_GIB" -lt 120 ]]; then
     die "at least 120 GiB free is required for Install / Repair; 200 GiB is recommended"

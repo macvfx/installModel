@@ -1,6 +1,6 @@
 # InstallModel Development Backlog
 
-**Status:** Planned work after InstallModel 0.2.1 (build 3)
+**Status:** Planned work after InstallModel 0.2.2 (build 4)
 
 This backlog distinguishes shipped behavior from work that has not yet been implemented. Priority reflects safety and test value, not a promised delivery date.
 
@@ -17,7 +17,7 @@ The repository currently provides:
 - a safe Generate tab with paired MP4/profile JSON naming and profile-aware settings;
 - About and in-app Help windows;
 - an ad-hoc local builder plus Developer ID signing, notarization, stapling, checksum, and Gatekeeper validation; and
-- twelve unit tests covering setup profiles, external model reuse, safe environment parsing, direct generation arguments, runtime location, and readable-script validation.
+- fourteen unit tests covering setup profiles, external model reuse, safe environment parsing, direct generation arguments, runtime location, readable-script validation, and selected-volume capacity probing.
 
 The two-Mac external-drive workflow has not yet completed formal end-to-end acceptance through the app.
 

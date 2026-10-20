@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.2 (build 4) — 2026-10-20
+
+### Fixed
+
+- Free-space checks now resolve the selected installation and model paths to their actual mounted filesystems.
+- A Models path on an attached drive is measured against that drive rather than the internal disk.
+- An unmounted `/Volumes/<drive>/…` selection is rejected instead of falling back to `/Volumes` on the internal filesystem.
+
+### Added
+
+- Separate in-app capacity rows for installation files and model files, including volume name, mount point, available GiB, minimum, and recommendation.
+- The installer log now identifies both selected storage volumes and their probe paths before enforcing 20 GiB for installation files and 120 GiB for model files.
+- Regression tests for new folders on an existing volume and missing attached-volume paths.
+
 ## 0.2.1 (build 3) — 2026-10-20
 
 ### Fixed

@@ -115,15 +115,17 @@ struct ContentView: View {
     private var storageSection: some View {
         ThemedSection(title: "4. Storage and profile", theme: theme) {
             VStack(alignment: .leading, spacing: 12) {
-                pathRow("Local installation root", text: $storageRoot) {
-                    chooseDirectory(title: "Choose local installation root", value: $storageRoot)
+                pathRow("Installation root", text: $storageRoot) {
+                    chooseDirectory(title: "Choose installation root", value: $storageRoot)
                 }
+                capacityRow(label: "Installation files", info: installationStorage, minimumGiB: 20)
                 Toggle("Keep model files in a separate folder or external drive", isOn: $useSeparateModelsDirectory)
                 if useSeparateModelsDirectory {
                     pathRow("Models folder", text: $modelsDirectory) {
                         chooseDirectory(title: "Choose or create the Models folder", value: $modelsDirectory)
                     }
                 }
+                capacityRow(label: "Model files", info: modelStorage, minimumGiB: 120, recommendedGiB: 200)
                 Picker("Profile", selection: $profile) {
                     ForEach(InstallProfile.allCases) { item in Text(item.title).tag(item) }
                 }
@@ -161,6 +163,11 @@ struct ContentView: View {
                     Text("License confirmation is required before model installation.")
                         .font(.caption)
                         .foregroundStyle(theme.secondaryText)
+                }
+                if !storageCapacityIsValid {
+                    Text("Choose mounted storage with at least 20 GiB free for installation files and 120 GiB free for model files. The selected attached drive is measured directly when it contains the chosen path.")
+                        .font(.caption)
+                        .foregroundStyle(.red)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -232,7 +239,26 @@ struct ContentView: View {
 
     private var configurationIsValid: Bool {
         machine.isSupportedArchitecture && profile.isCompatible(withMemoryGB: machine.memoryGB) && storageRoot.hasPrefix("/") &&
-            (!useSeparateModelsDirectory || modelsDirectory.hasPrefix("/"))
+            (!useSeparateModelsDirectory || modelsDirectory.hasPrefix("/")) && storageCapacityIsValid
+    }
+
+    private var effectiveModelsDirectory: String {
+        if useSeparateModelsDirectory { return modelsDirectory }
+        return URL(fileURLWithPath: storageRoot, isDirectory: true)
+            .appendingPathComponent("Models", isDirectory: true).path
+    }
+
+    private var installationStorage: StorageVolumeInfo? {
+        StorageProbe.inspect(path: storageRoot)
+    }
+
+    private var modelStorage: StorageVolumeInfo? {
+        StorageProbe.inspect(path: effectiveModelsDirectory)
+    }
+
+    private var storageCapacityIsValid: Bool {
+        guard let installationStorage, let modelStorage else { return false }
+        return installationStorage.availableGiB >= 20 && modelStorage.availableGiB >= 120
     }
 
     private func request() -> InstallerRequest {
@@ -293,6 +319,35 @@ struct ContentView: View {
                     .textFieldStyle(.roundedBorder)
                 Button("Choose…", action: choose)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func capacityRow(
+        label: String,
+        info: StorageVolumeInfo?,
+        minimumGiB: Int,
+        recommendedGiB: Int? = nil
+    ) -> some View {
+        if let info {
+            let belowMinimum = info.availableGiB < minimumGiB
+            let belowRecommendation = recommendedGiB.map { info.availableGiB < $0 } ?? false
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: belowMinimum ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                Text("\(label): \(info.availableGiB) GiB free on \(info.locationDescription).")
+                    .textSelection(.enabled)
+                if belowMinimum {
+                    Text("Minimum: \(minimumGiB) GiB.").fontWeight(.semibold)
+                } else if belowRecommendation, let recommendedGiB {
+                    Text("\(recommendedGiB) GiB recommended.").fontWeight(.semibold)
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(belowMinimum ? Color.red : (belowRecommendation ? Color.orange : theme.secondaryText))
+        } else {
+            Label("\(label): choose an existing mounted folder or a new folder inside an existing mounted volume.", systemImage: "externaldrive")
+                .font(.caption)
+                .foregroundStyle(.red)
         }
     }
 }

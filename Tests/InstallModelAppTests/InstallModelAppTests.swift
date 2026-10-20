@@ -158,4 +158,20 @@ final class InstallModelAppTests: XCTestCase {
                 .contains(where: { $0.contains("scripts/generate.py") })
         )
     }
+
+    func testStorageProbeUsesExistingVolumeForNewChildFolder() throws {
+        let volume = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: volume, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: volume) }
+
+        let requested = volume.appendingPathComponent("New MiniMax Install/Models", isDirectory: true)
+        let info = try XCTUnwrap(StorageProbe.inspect(path: requested.path))
+        XCTAssertEqual(info.probePath, volume.path)
+        XCTAssertGreaterThan(info.availableGiB, 0)
+    }
+
+    func testStorageProbeRejectsAnUnmountedVolumesPath() {
+        let missingVolume = "/Volumes/Example-Missing-\(UUID().uuidString)/Models"
+        XCTAssertNil(StorageProbe.inspect(path: missingVolume))
+    }
 }
