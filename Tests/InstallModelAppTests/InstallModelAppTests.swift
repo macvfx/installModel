@@ -33,6 +33,8 @@ final class InstallModelAppTests: XCTestCase {
         XCTAssertTrue(script.contains("REQUIRED_COMMANDS=\"git hf uv\""))
         XCTAssertTrue(script.contains("for formula in python@3.12 ffmpeg git hf uv; do"))
         XCTAssertTrue(script.contains("cd \"$RUNTIME_DIR\""))
+        XCTAssertTrue(script.contains("FL2VA/model_index.json\" --local-dir \"$MODELS_DIR/MiniMax-H3\" --force-download"))
+        XCTAssertTrue(script.contains("required checkpoint index is missing after forced repair"))
     }
 
     func testStageTwoCheckArgumentsReuseExternalModels() {

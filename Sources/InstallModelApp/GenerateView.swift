@@ -33,7 +33,7 @@ struct GenerateView: View {
         .foregroundStyle(theme.primaryText)
         .onAppear {
             if environmentPath.isEmpty { environmentPath = suggestedEnvironmentPath }
-            if environment == nil, FileManager.default.isReadableFile(atPath: environmentPath) {
+            if FileManager.default.isReadableFile(atPath: environmentPath) {
                 loadEnvironment()
             }
         }
@@ -59,7 +59,7 @@ struct GenerateView: View {
                     TextField("minimax-h3-paths.env", text: $environmentPath)
                         .textFieldStyle(.roundedBorder)
                     Button("Choose…", action: chooseEnvironment)
-                    Button("Load", action: loadEnvironment)
+                    Button("Load / Recheck", action: loadEnvironment)
                         .buttonStyle(.borderedProminent)
                 }
                 HStack {

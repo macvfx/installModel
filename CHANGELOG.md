@@ -10,6 +10,8 @@
 - Install / Repair no longer stops at changed installer-managed runtime files. It saves their diff under `InstallModel Backups`, restores only the four managed files to the pinned revision, and continues the repair.
 - Check now reports the runtime doctor's required `uv` executable, and Install / Repair installs the Homebrew `uv` formula when it is absent.
 - The runtime doctor now runs from the pinned runtime directory so its project metadata and lockfile checks resolve against the intended checkout.
+- Install / Repair now force-downloads `FL2VA/model_index.json` when a normal Hugging Face refresh reports success without leaving a readable file, and verifies every required model index before declaring completion.
+- Generate revalidates the saved environment whenever its tab appears and provides a **Load / Recheck** control, preventing an earlier missing-file result from remaining onscreen after a successful repair.
 
 ### Diagnosis from 0.2.2 field logs
 

@@ -14,6 +14,8 @@ InstallModel 0.2.3 addresses the first 0.2.2 test on a 64 GB target Mac.
 - Unrelated files in the runtime checkout are not restored or removed.
 - Check reports the required `uv` executable, while Install / Repair installs the Homebrew `uv` formula when needed.
 - The runtime doctor runs from the pinned checkout so it can inspect the intended `pyproject.toml` and lockfile.
+- If Hugging Face reports a successful refresh but the required `FL2VA/model_index.json` is not readable, Install / Repair force-downloads that single small file and verifies it before continuing.
+- Generate automatically revalidates the environment when its tab reappears; **Load / Recheck** is also available for an immediate manual refresh.
 - Generation checks for the configured checkpoint's `model_index.json` and the transformer, text encoder, and Turbo LoRA folders before launching Python.
 - An incomplete or disconnected model drive therefore produces an actionable in-app message instead of a Python traceback.
 

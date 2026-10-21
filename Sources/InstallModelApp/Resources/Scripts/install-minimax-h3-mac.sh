@@ -457,12 +457,19 @@ if [[ "$SKIP_MODELS" -eq 1 ]]; then write_environment; say "Tools and runtime ar
 export HF_HUB_DOWNLOAD_TIMEOUT="${HF_HUB_DOWNLOAD_TIMEOUT:-30}"
 say "Downloading official tokenizer, processor, BF16 conditioner source, and VAEs"
 hf download MiniMaxAI/MiniMax-H3 --include "FL2VA/model_index.json" "FL2VA/tokenizer/**" "FL2VA/processor/**" "FL2VA/text_encoder/**" "FL2VA/video_vae/**" "FL2VA/audio_vae/**" --local-dir "$MODELS_DIR/MiniMax-H3"
+if [[ ! -r "$CHECKPOINT_DIR/model_index.json" ]]; then
+  say "The required checkpoint index is still missing; forcing a fresh single-file download"
+  hf download MiniMaxAI/MiniMax-H3 "FL2VA/model_index.json" --local-dir "$MODELS_DIR/MiniMax-H3" --force-download
+fi
+[[ -r "$CHECKPOINT_DIR/model_index.json" ]] || die "required checkpoint index is missing after forced repair: $CHECKPOINT_DIR/model_index.json"
 say "Downloading the revision-pinned calibrated INT8 transformer"
 hf download "$INT8_REPO" --revision "$INT8_REVISION" --local-dir "$INT8_DIR"
 say "Downloading the revision-pinned native MLX Turbo adapter"
 hf download "$TURBO_REPO" --revision "$TURBO_REVISION" --local-dir "$TURBO_DIR"
 
 [[ -f "$SOURCE_ENCODER_DIR/model.safetensors.index.json" ]] || die "BF16 text-encoder source is incomplete"
+[[ -f "$INT8_DIR/model.safetensors.index.json" ]] || die "calibrated INT8 transformer is incomplete"
+[[ -f "$TURBO_DIR/adapter.safetensors.index.json" ]] || die "Turbo LoRA is incomplete"
 if [[ -f "$ENCODER_DIR/model.safetensors.index.json" && -f "$ENCODER_DIR/quant_config.json" ]]; then
   FOUND_BITS="$("$VENV_PYTHON" -c 'import json,sys; print(json.load(open(sys.argv[1]))["bits"])' "$ENCODER_DIR/quant_config.json")"
   [[ "$FOUND_BITS" == "$CONDITIONER_BITS" ]] || die "existing conditioner is ${FOUND_BITS}-bit, expected ${CONDITIONER_BITS}-bit"
@@ -472,6 +479,7 @@ else
   say "Building the streamed ${CONDITIONER_BITS}-bit conditioner"
   "$VENV_PYTHON" "$RUNTIME_DIR/scripts/quantize_text_encoder.py" --source "$SOURCE_ENCODER_DIR" --output "$ENCODER_DIR" --bits "$CONDITIONER_BITS" --group-size 64 --num-layers 50
 fi
+[[ -f "$ENCODER_DIR/model.safetensors.index.json" && -f "$ENCODER_DIR/quant_config.json" ]] || die "quantized text encoder is incomplete"
 
 write_environment
 say "Running the runtime's model and environment doctor"

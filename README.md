@@ -36,6 +36,7 @@ The repository also contains a deliberately small macOS SwiftUI app. It:
 - checks the checkpoint and model-component locations before generation, including `FL2VA/model_index.json`, so an incomplete external model folder is reported before Python starts;
 - preserves a patch of changed installer-managed runtime files and restores only those managed files during Install / Repair;
 - checks and installs the runtime doctor's `uv` prerequisite, then runs the doctor from the pinned runtime directory;
+- force-repairs and verifies the checkpoint index when Hugging Face's local-directory metadata reports success without a readable `model_index.json`, and rechecks the Generate environment when its tab is reopened;
 - includes native About and Help windows with links to the complete public documentation and [code.matx.ca](https://code.matx.ca).
 
 Version 0.2.3 is prepared as an Apple Silicon private test app. It is not sandboxed because it must run Homebrew, Python, model tools, and user-selected external-drive paths. Browser account creation, license acceptance, Homebrew installation, and `hf auth login` intentionally remain under the operator's control.
