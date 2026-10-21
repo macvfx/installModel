@@ -1,6 +1,6 @@
-# InstallModel 0.2.3 (Build 5) — Private Test
+# InstallModel 0.2.3 (Build 5)
 
-InstallModel 0.2.3 addresses the first 0.2.2 test on a 64 GB target Mac.
+InstallModel 0.2.3 improves external-drive setup, runtime recovery, dependency repair, and generation preflight based on target-Mac testing of 0.2.2.
 
 ## Remembered locations
 
@@ -19,10 +19,10 @@ InstallModel 0.2.3 addresses the first 0.2.2 test on a 64 GB target Mac.
 - Generation checks for the configured checkpoint's `model_index.json` and the transformer, text encoder, and Turbo LoRA folders before launching Python.
 - An incomplete or disconnected model drive therefore produces an actionable in-app message instead of a Python traceback.
 
-## Field-log diagnosis
+## Target-Mac repair result
 
 The 0.2.2 generation command correctly targeted the configured `MiniMax-H3/FL2VA` checkpoint, but `model_index.json` was missing there. Install / Repair was positioned to download that missing file but stopped first because a managed runtime file contained local changes. This build repairs that narrow condition while preserving the prior contents as a patch.
 
-A later 0.2.2 repair successfully downloaded the missing checkpoint metadata and exposed a second installer omission: the runtime doctor requires `uv`, but the installer did not check or install it. This build includes that prerequisite.
+A later repair successfully downloaded the missing checkpoint metadata and exposed a second installer omission: the runtime doctor requires `uv`, but the installer did not check or install it. This release includes that prerequisite.
 
-This remains a private test build until Install / Repair, Check, generation, decode, and audiovisual acceptance complete on the target Mac.
+The corrected target-Mac Install / Repair path completed the doctor with zero fatal issues, wrote the environment file, and exited successfully. Final generated-media playback, stream inspection, full decode, prompt adherence, motion, and audio review remain separate acceptance work.

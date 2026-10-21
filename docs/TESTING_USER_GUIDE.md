@@ -1,6 +1,6 @@
 # InstallModel Two-Mac Testing Guide
 
-**Status:** Operator and release test guide for InstallModel 0.2.3 (build 5)
+**Status:** Operator and release acceptance guide for InstallModel 0.2.3 (build 5)
 
 **Audience:** Testers preparing MiniMax H3 model assets on one Apple Silicon Mac and completing setup on a second Apple Silicon Mac
 
@@ -16,6 +16,8 @@ Current behavior:
 - stores model assets in a separately selected external `Models` folder;
 - reuses completed model files when the drive moves to another Mac; and
 - runs the runtime doctor after installation;
+- remembers the last setup paths, workflow, profile, and environment-file location on each Mac;
+- installs the runtime doctor's `uv` requirement and verifies required model indexes before reporting installation success;
 - loads the generated environment safely and runs a configurable test clip from the Generate tab; and
 - provides About and in-app Help windows with public documentation links.
 
@@ -28,6 +30,8 @@ Current limitations:
 - M2 Ultra 128 GB performance has not yet been measured.
 
 Install / Repair preserves a patch before restoring its four installer-managed runtime files. Unrelated runtime files remain untouched. Do not place a Hugging Face token in the app, a command argument, a screenshot, or a test report.
+
+Pre-release target-Mac evidence confirmed that Install / Repair could reuse the external model folder, repair the previously missing checkpoint index, complete the runtime doctor with zero fatal issues, write the environment file, and exit successfully. That establishes installation readiness only; final MP4 generation, decode, and audiovisual acceptance remain separate gates.
 
 ## Test roles and evidence
 
@@ -224,7 +228,7 @@ Authentication is machine-specific. Repeat it on the target Mac. The app never a
 
 Installation and doctor success prove readiness, not audiovisual quality. In the app:
 
-1. Open **Generate** and load the target installation root's `minimax-h3-paths.env`.
+1. Open **Generate** and choose **Load / Recheck** for the target installation root's `minimax-h3-paths.env`. The saved location is revalidated whenever the tab reopens.
 2. Confirm the displayed hardware profile, memory limit, MP4 path, and JSON path.
 3. Use the canonical fox prompt from [the README](../README.md#first-comparable-smoke-test), output name `fox-test`, resolution `768x448`, duration `5`, steps `9`, and seed `42`.
 4. Leave **Require a muxed MP4** enabled and retain the installed memory/stream settings for the first comparison.
@@ -262,9 +266,11 @@ The historical 64 GB M1 Max observation was 24.6 minutes for a 5.17-second 768×
 | Less than 120 GiB free | Do not start model preparation | Free space or choose another APFS SSD |
 | Drive disconnects or mount name changes | Stop and do not create a replacement folder at the old path | Reconnect under the original volume name, verify the folder, and rerun |
 | App exits or download is interrupted | Preserve partial files and output | Rerun Install / Repair with the identical paths; downloads are designed to resume/check existing files |
-| Existing runtime has local changes | Do not discard the changes | Inspect or preserve that checkout before continuing |
+| Installer-managed runtime files changed | Preserve the operation log | Install / Repair saves their diff under `InstallModel Backups`, restores only the four managed files, and leaves unrelated files untouched |
 | Conditioner folder is partial | Do not delete it without reviewing the failure | Move it aside manually after preserving evidence, then rerun |
 | FFmpeg references `/opt/local` | Do not rely on PATH-selected MacPorts FFmpeg | Use the environment file's explicit Homebrew FFmpeg path in the smoke-test command |
+| Doctor reports `uv` missing | Preserve output | Rerun Install / Repair; it installs the Homebrew `uv` formula when Homebrew is available |
+| Generate still shows a repaired `model_index.json` as missing | Do not delete the model folder | Choose **Load / Recheck**; if the file is genuinely absent, rerun Install / Repair so the single-file forced repair and verification can run |
 | Check still reports missing files | Record the exact missing path | Rerun Install / Repair; if repeated, file an issue with redacted output |
 
 ## Test record template
@@ -315,4 +321,4 @@ Before sharing a test report publicly, replace real usernames, volume names, and
 - [0.2.0 release notes](RELEASE_NOTES_0.2.0.md)
 - [0.2.1 private test release notes](RELEASE_NOTES_0.2.1.md)
 - [0.2.2 private test release notes](RELEASE_NOTES_0.2.2.md)
-- [0.2.3 private test release notes](RELEASE_NOTES_0.2.3.md)
+- [0.2.3 release notes](RELEASE_NOTES_0.2.3.md)

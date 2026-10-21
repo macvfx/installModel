@@ -39,7 +39,7 @@ The repository also contains a deliberately small macOS SwiftUI app. It:
 - force-repairs and verifies the checkpoint index when Hugging Face's local-directory metadata reports success without a readable `model_index.json`, and rechecks the Generate environment when its tab is reopened;
 - includes native About and Help windows with links to the complete public documentation and [code.matx.ca](https://code.matx.ca).
 
-Version 0.2.3 is prepared as an Apple Silicon private test app. It is not sandboxed because it must run Homebrew, Python, model tools, and user-selected external-drive paths. Browser account creation, license acceptance, Homebrew installation, and `hf auth login` intentionally remain under the operator's control.
+Version 0.2.3 is the current Apple Silicon release. It is Developer ID signed, notarized, and distributed as a checked DMG. It is not sandboxed because it must run Homebrew, Python, model tools, and user-selected external-drive paths. Browser account creation, license acceptance, Homebrew installation, and `hf auth login` intentionally remain under the operator's control.
 
 Build, test, and run it with Xcode's active command-line toolchain:
 
@@ -61,7 +61,7 @@ The bundle is ad-hoc signed for local inspection. It is not Developer ID signed,
 
 1. Complete Install / Repair and confirm Check passes.
 2. Open the **Generate** tab. It suggests the `minimax-h3-paths.env` file below the installation root shown in Setup; choose a different file if the runtime is elsewhere.
-3. Select **Load**. Confirm that the displayed profile, memory limit, MP4 path, and JSON path match the target Mac and connected drive.
+3. Select **Load / Recheck**. Confirm that the displayed profile, memory limit, MP4 path, and JSON path match the target Mac and connected drive. The app remembers this environment-file location and revalidates it when the Generate tab reopens.
 4. Edit the prompt and output name. The app automatically uses that name for both `Outputs/<profile>/<name>.mp4` and `Profiles/<profile>/<name>.json`. It will not overwrite an existing result.
 5. Adjust resolution, duration, steps, and seed. Advanced controls begin with the values written by the installer and cannot raise the memory limit above that profile's guideline.
 6. Select **Generate clip**. Keep the Mac awake and any model drive connected. The live log shows the same generation progress as Terminal.
@@ -373,7 +373,8 @@ For quick drafts, change only `--steps` to `"$MINIMAX_H3_DRAFT_STEPS"`. Five sig
 
 ## Troubleshooting
 
-- **Missing `FL2VA/model_index.json`:** rerun the installer or download that exact file with `hf download MiniMaxAI/MiniMax-H3 "FL2VA/model_index.json" --local-dir "$MINIMAX_H3_MODELS/MiniMax-H3"`.
+- **Missing `FL2VA/model_index.json`:** rerun Install / Repair. Version 0.2.3 force-refreshes that exact file when normal Hugging Face local-directory metadata says the download is current but the file is not readable. Then use **Load / Recheck** in Generate.
+- **Missing `uv`:** rerun Install / Repair; after Homebrew is available, version 0.2.3 installs the runtime doctor's `uv` requirement automatically.
 - **`401`, `403`, or gated access:** confirm the license/access step in the same account, then run `hf auth login --force`.
 - **Partial conditioner directory:** inspect or move only the reported `MiniMax-H3-MLX-TextEncoder-4bit` or `8bit` folder aside; retain the BF16 source.
 - **`dyld` references `/opt/local`:** use `--ffmpeg "$MINIMAX_H3_FFMPEG"`; the generated value points to the tested Homebrew binary.

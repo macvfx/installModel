@@ -58,20 +58,24 @@ struct HelpView: View {
 
                 helpSection("Before setup", icon: "person.crop.circle.badge.checkmark") {
                     Text("Create a Hugging Face account, review and accept the MiniMax H3 license yourself, install Homebrew if needed, and run `hf auth login` in Terminal. InstallModel never requests or stores your token.")
+                    Text("After Homebrew is available, Install / Repair installs or checks Python 3.12, FFmpeg, Git, the Hugging Face CLI, and `uv`. Account login and license review remain manual.")
                 }
 
                 helpSection("Prepare or set up a Mac", icon: "shippingbox") {
                     Text("In Setup, confirm the detected chip and memory, choose Stage 1 to prepare portable model files or Stage 2 to reuse them on a target Mac, select storage locations, and run Preview, Check, then Install / Repair.")
                     Text("Keep an external model drive connected under the same volume name. A target Mac still needs its own Homebrew components, authentication, runtime, and generated environment file.")
+                    Text("The selected installation root, Models folder, workflow, and profile are remembered on this Mac. Free-space checks follow the actual selected internal or attached volume.")
+                    Text("Check is read-only. Install / Repair can restore its managed runtime files after preserving a patch, reuse completed downloads, repair a missing checkpoint index, and run the runtime doctor.")
                 }
 
                 helpSection("Generate a clip", icon: "film.stack") {
-                    Text("Open Generate and load `minimax-h3-paths.env`. Edit the prompt and output name, then adjust resolution, duration, quality steps, seed, and advanced memory settings if required.")
+                    Text("Open Generate and use Load / Recheck for `minimax-h3-paths.env`. The last environment-file location is remembered and revalidated when the tab reopens. Edit the prompt and output name, then adjust resolution, duration, quality steps, seed, and advanced memory settings if required.")
                     Text("The output name creates both an MP4 and a performance-profile JSON. Existing results are never overwritten. Keep the Mac awake, connected to power, and attached to the model drive until generation finishes.")
                 }
 
                 helpSection("If something fails", icon: "wrench.and.screwdriver") {
-                    Text("Copy the visible console output before retrying. Run Check again after repairing Homebrew, Hugging Face access, storage, or a disconnected drive. Do not delete partial model downloads; the installer is designed to verify and reuse them.")
+                    Text("Reveal and preserve the operation log before retrying. Run Check again after repairing Homebrew, Hugging Face access, storage, or a disconnected drive. Do not delete partial model downloads; the installer is designed to verify and reuse them.")
+                    Text("If Generate still shows an earlier missing-file warning after repair, choose Load / Recheck. Install / Repair force-refreshes a missing `FL2VA/model_index.json` and refuses to report success unless the required model indexes are readable.")
                     Text("A completed generation still needs playback, audio, motion, prompt-adherence, `ffprobe`, and decode review before it is accepted as valid media.")
                 }
 
