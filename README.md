@@ -35,6 +35,7 @@ The repository also contains a deliberately small macOS SwiftUI app. It:
 - remembers the last installation root, external Models folder, workflow, profile, and environment-file location, then automatically reloads a readable saved environment on the next launch;
 - checks the checkpoint and model-component locations before generation, including `FL2VA/model_index.json`, so an incomplete external model folder is reported before Python starts;
 - preserves a patch of changed installer-managed runtime files and restores only those managed files during Install / Repair;
+- checks and installs the runtime doctor's `uv` prerequisite, then runs the doctor from the pinned runtime directory;
 - includes native About and Help windows with links to the complete public documentation and [code.matx.ca](https://code.matx.ca).
 
 Version 0.2.3 is prepared as an Apple Silicon private test app. It is not sandboxed because it must run Homebrew, Python, model tools, and user-selected external-drive paths. Browser account creation, license acceptance, Homebrew installation, and `hf auth login` intentionally remain under the operator's control.
@@ -198,7 +199,7 @@ You may instead set `--storage-root` directly to the external drive on both Macs
 
 ### Homebrew and Apple tools
 
-Install [Homebrew](https://brew.sh/) manually if `brew --version` fails. The script installs or checks `python@3.12`, `ffmpeg`, `git`, and `hf`. If Apple's Command Line Tools are absent, it starts Apple's installer and asks you to rerun afterward.
+Install [Homebrew](https://brew.sh/) manually if `brew --version` fails. The script installs or checks `python@3.12`, `ffmpeg`, `git`, `hf`, and the runtime doctor's `uv` tool. If Apple's Command Line Tools are absent, it starts Apple's installer and asks you to rerun afterward.
 
 The generated environment records the exact Homebrew `ffmpeg` and `ffprobe` binaries. This avoids the previously observed broken MacPorts binary under `/opt/local/bin`.
 

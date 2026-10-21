@@ -26,6 +26,15 @@ final class InstallModelAppTests: XCTestCase {
         XCTAssertNotNil(scriptURL)
     }
 
+    @MainActor
+    func testBundledInstallerProvidesEveryDoctorToolAndRunsFromRuntime() throws {
+        let scriptURL = try XCTUnwrap(InstallerController.scriptURL)
+        let script = try String(contentsOf: scriptURL, encoding: .utf8)
+        XCTAssertTrue(script.contains("REQUIRED_COMMANDS=\"git hf uv\""))
+        XCTAssertTrue(script.contains("for formula in python@3.12 ffmpeg git hf uv; do"))
+        XCTAssertTrue(script.contains("cd \"$RUNTIME_DIR\""))
+    }
+
     func testStageTwoCheckArgumentsReuseExternalModels() {
         let request = InstallerRequest(
             storageRoot: "/Users/example/MiniMax-H3",

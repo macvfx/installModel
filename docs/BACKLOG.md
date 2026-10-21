@@ -17,7 +17,7 @@ The repository currently provides:
 - a safe Generate tab with paired MP4/profile JSON naming and profile-aware settings;
 - About and in-app Help windows;
 - an ad-hoc local builder plus Developer ID signing, notarization, stapling, checksum, and Gatekeeper validation; and
-- fifteen unit tests covering setup profiles, external model reuse, safe environment parsing, direct generation arguments, runtime location, readable-script validation, model preflight, and selected-volume capacity probing.
+- sixteen unit tests covering setup profiles, external model reuse, safe environment parsing, direct generation arguments, runtime location, readable-script validation, doctor prerequisites, model preflight, and selected-volume capacity probing.
 
 The two-Mac external-drive workflow has not yet completed formal end-to-end acceptance through the app.
 
@@ -92,7 +92,7 @@ Version 0.2.1 adds installation keep-awake behavior, durable logs, runtime integ
 
 **Acceptance gates:**
 
-- individual status rows cover Command Line Tools, Homebrew, Python 3.12, Git, Hugging Face CLI, authentication, FFmpeg, runtime revision, MLX import, license assertion, and each required model component;
+- individual status rows cover Command Line Tools, Homebrew, Python 3.12, Git, Hugging Face CLI, `uv`, authentication, FFmpeg, runtime revision, MLX import, license assertion, and each required model component;
 - every failed row contains one actionable recovery instruction;
 - statuses derive from the same checks as the installer to prevent drift; and
 - a successful dashboard corresponds to the script's READY result.

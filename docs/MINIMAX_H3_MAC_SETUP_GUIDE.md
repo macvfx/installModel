@@ -99,7 +99,7 @@ Install [Homebrew](https://brew.sh/) if needed, then install the required packag
 
 ```bash
 brew update
-brew install python@3.12 ffmpeg git hf
+brew install python@3.12 ffmpeg git hf uv
 ```
 
 Confirm the tools:

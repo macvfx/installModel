@@ -112,7 +112,7 @@ The local Debug build requires an installed Swift/Xcode toolchain and is only ad
 4. Install the Hugging Face CLI if needed and authenticate in Terminal:
 
    ```bash
-   brew install hf
+   brew install hf uv
    hf auth login
    hf auth whoami
    ```

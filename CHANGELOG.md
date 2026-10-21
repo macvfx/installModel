@@ -8,11 +8,14 @@
 - Generate remembers the last environment-file location and automatically reloads it when the file remains available.
 - Generation now checks for `FL2VA/model_index.json` and the configured transformer, text encoder, and Turbo LoRA folders before launching Python.
 - Install / Repair no longer stops at changed installer-managed runtime files. It saves their diff under `InstallModel Backups`, restores only the four managed files to the pinned revision, and continues the repair.
+- Check now reports the runtime doctor's required `uv` executable, and Install / Repair installs the Homebrew `uv` formula when it is absent.
+- The runtime doctor now runs from the pinned runtime directory so its project metadata and lockfile checks resolve against the intended checkout.
 
 ### Diagnosis from 0.2.2 field logs
 
 - The checkpoint path was correct, but `/Volumes/.../MiniMax-H3/FL2VA/model_index.json` was absent.
 - Install / Repair would have downloaded the missing checkpoint metadata, but it stopped earlier because a managed runtime file differed from the pinned checkout.
+- A subsequent 0.2.2 repair downloaded the missing checkpoint metadata and then exposed the omitted `uv` prerequisite.
 
 ## 0.2.2 (build 4) — 2026-10-20
 

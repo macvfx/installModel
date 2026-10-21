@@ -309,7 +309,7 @@ elif [[ "$AVAILABLE_GIB" -lt 20 ]]; then
   die "at least 20 GiB free is required for tools-only installation"
 fi
 
-REQUIRED_COMMANDS="git hf"
+REQUIRED_COMMANDS="git hf uv"
 if [[ "$CHECK_ONLY" -eq 1 ]]; then
   if xcode-select -p >/dev/null 2>&1; then check_ok "Apple Command Line Tools"; else check_missing "Apple Command Line Tools; run: xcode-select --install"; fi
   if command -v brew >/dev/null 2>&1; then check_ok "Homebrew"; else check_missing "Homebrew; install it manually from https://brew.sh/"; fi
@@ -357,7 +357,7 @@ fi
 
 if ! xcode-select -p >/dev/null 2>&1; then say "Apple Command Line Tools are missing. Starting Apple's installer..."; xcode-select --install || true; die "complete the Apple installer, then rerun"; fi
 command -v brew >/dev/null 2>&1 || die "install Homebrew manually from https://brew.sh/, then rerun"
-for formula in python@3.12 ffmpeg git hf; do
+for formula in python@3.12 ffmpeg git hf uv; do
   if brew list --formula "$formula" >/dev/null 2>&1; then say "$formula is already installed"; else say "Installing Homebrew formula: $formula"; brew install "$formula"; fi
 done
 for command_name in $REQUIRED_COMMANDS; do command -v "$command_name" >/dev/null 2>&1 || die "$command_name is unavailable after installation"; done
@@ -475,10 +475,13 @@ fi
 
 write_environment
 say "Running the runtime's model and environment doctor"
-MINIMAX_H3_ACCEPT_LICENSE=1 "$VENV_PYTHON" "$RUNTIME_DIR/scripts/doctor.py" \
-  --checkpoint "$CHECKPOINT_DIR" --transformer "$INT8_DIR" --text-encoder "$ENCODER_DIR" --turbo-lora "$TURBO_DIR" \
-  --output-dir "$OUTPUTS_DIR" --ffmpeg "$PREFERRED_FFMPEG" --ffprobe "$PREFERRED_FFPROBE" \
-  --min-memory-gib "$PROFILE_MIN_MEMORY" --min-free-gib 20 --require-model-paths --require-license-acceptance --pretty
+(
+  cd "$RUNTIME_DIR"
+  MINIMAX_H3_ACCEPT_LICENSE=1 "$VENV_PYTHON" scripts/doctor.py \
+    --checkpoint "$CHECKPOINT_DIR" --transformer "$INT8_DIR" --text-encoder "$ENCODER_DIR" --turbo-lora "$TURBO_DIR" \
+    --output-dir "$OUTPUTS_DIR" --ffmpeg "$PREFERRED_FFMPEG" --ffprobe "$PREFERRED_FFPROBE" \
+    --min-memory-gib "$PROFILE_MIN_MEMORY" --min-free-gib 20 --require-model-paths --require-license-acceptance --pretty
+)
 
 say "Installation and preflight completed."
 say "Saved paths and selected profile to: $PATHS_FILE"
